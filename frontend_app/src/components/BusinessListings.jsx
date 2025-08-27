@@ -1,293 +1,239 @@
-import { useState, useEffect } from 'react'
-import { ArrowLeft, Star, MapPin, Phone, Heart } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import apiService from '../services/api'
+import React, { useState, useEffect } from 'react';
 
-const BusinessListings = ({ searchLocation, onBack, onBusinessSelect }) => {
-  const [businesses, setBusinesses] = useState([])
-  const [filteredBusinesses, setFilteredBusinesses] = useState([])
-  const [selectedCategory, setSelectedCategory] = useState('All')
-  const [categories, setCategories] = useState(['All'])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [favorites, setFavorites] = useState(new Set())
+// Mock data for businesses
+const mockBusinesses = [
+  {
+    id: 1,
+    name: "Soul Food Kitchen",
+    category: "Restaurant",
+    address: "123 Main St, Buffalo, NY",
+    phone: "(716) 555-0123",
+    description: "Authentic soul food restaurant serving the community for over 20 years.",
+    image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400",
+    rating: 4.5,
+    reviews_count: 127,
+    owner_ethnicity: "Black-owned",
+    verified: true
+  },
+  {
+    id: 2,
+    name: "Tech Solutions Plus",
+    category: "Technology",
+    address: "456 Tech Ave, Buffalo, NY",
+    phone: "(716) 555-0456",
+    description: "Full-service IT consulting and software development company.",
+    image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400",
+    rating: 4.8,
+    reviews_count: 89,
+    owner_ethnicity: "Asian-owned",
+    verified: true
+  },
+  {
+    id: 3,
+    name: "Abuela's Market",
+    category: "Grocery",
+    address: "789 Market St, Rochester, NY",
+    phone: "(585) 555-0789",
+    description: "Family-owned grocery store with authentic Hispanic foods and ingredients.",
+    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400",
+    rating: 4.6,
+    reviews_count: 203,
+    owner_ethnicity: "Hispanic-owned",
+    verified: true
+  },
+  {
+    id: 4,
+    name: "Harmony Hair Salon",
+    category: "Beauty",
+    address: "321 Style Ave, Syracuse, NY",
+    phone: "(315) 555-0321",
+    description: "Professional hair care and styling for all hair types and textures.",
+    image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400",
+    rating: 4.9,
+    reviews_count: 156,
+    owner_ethnicity: "Black-owned",
+    verified: true
+  }
+];
+
+const BusinessListings = ({ searchCity = '', searchState = '', selectedCategory = '' }) => {
+  const [businesses, setBusinesses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [favorites, setFavorites] = useState(new Set());
 
   useEffect(() => {
-    fetchBusinesses()
-  }, [searchLocation])
-
-  useEffect(() => {
-    filterBusinesses()
-  }, [businesses, selectedCategory])
-
-  const fetchBusinesses = async () => {
-    try {
-      setLoading(true)
-      setError(null)
+    // Simulate API call with mock data
+    const loadBusinesses = () => {
+      setLoading(true);
       
-      let data
-      if (searchLocation) {
-        // Parse city and state from searchLocation
-        const [city, state] = searchLocation.split(',').map(s => s.trim())
-        data = await apiService.getBusinesses({ city, state })
-      } else {
-        data = await apiService.getBusinesses()
+      // Filter businesses based on search criteria
+      let filteredBusinesses = mockBusinesses;
+      
+      if (searchCity) {
+        filteredBusinesses = filteredBusinesses.filter(business =>
+          business.address.toLowerCase().includes(searchCity.toLowerCase())
+        );
       }
       
-      setBusinesses(data.businesses || [])
+      if (selectedCategory) {
+        filteredBusinesses = filteredBusinesses.filter(business =>
+          business.category.toLowerCase() === selectedCategory.toLowerCase()
+        );
+      }
       
-      // Set organized categories instead of extracting from data
-      const organizedCategories = [
-        'All', 
-        'Food & Dining', 
-        'Entertainment', 
-        'Services', 
-        'Retail', 
-        'Beauty & Personal Care', 
-        'Technology', 
-        'Healthcare', 
-        'Education'
-      ]
-      setCategories(organizedCategories)
-      
-    } catch (err) {
-      setError('Failed to load businesses. Please try again.')
-      console.error('Error fetching businesses:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+      // Simulate loading delay
+      setTimeout(() => {
+        setBusinesses(filteredBusinesses);
+        setLoading(false);
+      }, 500);
+    };
 
-  const filterBusinesses = () => {
-    if (selectedCategory === 'All') {
-      setFilteredBusinesses(businesses)
-    } else {
-      // Map new categories to existing business categories
-      const categoryMapping = {
-        'Food & Dining': ['Restaurant', 'Grocery Store'],
-        'Entertainment': ['Entertainment'],
-        'Services': ['Professional Services', 'Automotive', 'Home & Garden', 'Fitness & Wellness'],
-        'Retail': ['Retail'],
-        'Beauty & Personal Care': ['Beauty & Personal Care'],
-        'Technology': ['Technology'],
-        'Healthcare': ['Healthcare'],
-        'Education': ['Education']
-      }
-      
-      let categoriesToFilter = []
-      if (categoryMapping[selectedCategory]) {
-        categoriesToFilter = categoryMapping[selectedCategory]
-      } else {
-        categoriesToFilter = [selectedCategory]
-      }
-      
-      const filtered = businesses.filter(business => 
-        categoriesToFilter.includes(business.category)
-      )
-      setFilteredBusinesses(filtered)
-    }
-  }
+    loadBusinesses();
+  }, [searchCity, searchState, selectedCategory]);
 
   const toggleFavorite = (businessId) => {
-    const newFavorites = new Set(favorites)
+    const newFavorites = new Set(favorites);
     if (newFavorites.has(businessId)) {
-      newFavorites.delete(businessId)
+      newFavorites.delete(businessId);
     } else {
-      newFavorites.add(businessId)
+      newFavorites.add(businessId);
     }
-    setFavorites(newFavorites)
-  }
+    setFavorites(newFavorites);
+  };
 
-  const renderStars = (rating) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        size={14}
-        className={i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}
-      />
-    ))
-  }
-
-  const handleBusinessClick = (business) => {
-    if (onBusinessSelect) {
-      onBusinessSelect(business)
+  const shareBusinesses = () => {
+    const favoriteBusinesses = businesses.filter(b => favorites.has(b.id));
+    if (favoriteBusinesses.length === 0) {
+      alert('Please add some businesses to your favorites first!');
+      return;
     }
-  }
+    
+    const shareText = `Check out these amazing minority-owned businesses:\n${favoriteBusinesses.map(b => `• ${b.name} - ${b.address}`).join('\n')}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'Melanin Market - Support Local Businesses',
+        text: shareText,
+        url: window.location.href
+      });
+    } else {
+      navigator.clipboard.writeText(shareText);
+      alert('Business list copied to clipboard!');
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading businesses...</p>
-        </div>
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={fetchBusinesses} className="bg-purple-600 hover:bg-purple-700">
-            Try Again
-          </Button>
-        </div>
-      </div>
-    )
+    );
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 pt-12 pb-6">
-        <div className="flex items-center mb-4">
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors mr-3"
-            >
-              <ArrowLeft size={20} />
-            </button>
-          )}
-          <div>
-            <h1 className="text-xl font-bold text-white">
-              {searchLocation || 'All Locations'}
-            </h1>
-            <p className="text-white/80">
-              Found {filteredBusinesses.length} minority-owned business{filteredBusinesses.length !== 1 ? 'es' : ''}
-            </p>
-          </div>
-        </div>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">
+          {searchCity ? `Businesses in ${searchCity}` : 'Featured Businesses'}
+        </h2>
+        <button
+          onClick={shareBusinesses}
+          className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+        >
+          Share Favorites
+        </button>
       </div>
 
-      {/* Category Filter */}
-      <div className="px-6 py-4 bg-white shadow-sm">
-        <div className="flex space-x-2 overflow-x-auto">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === category
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Results count */}
+      <p className="text-gray-600">
+        {businesses.length} {businesses.length === 1 ? 'business' : 'businesses'} found
+      </p>
 
-      {/* Business List */}
-      <div className="px-6 py-4 space-y-4">
-        {filteredBusinesses.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">No businesses found in this category.</p>
-            <Button
-              onClick={() => setSelectedCategory('All')}
-              variant="outline"
-              className="text-purple-600 border-purple-600"
-            >
-              View All Categories
-            </Button>
-          </div>
-        ) : (
-          filteredBusinesses.map((business) => (
-            <div key={business.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-              <div className="flex">
-                {/* Business Image */}
-                <div className="w-24 h-24 flex-shrink-0">
-                  <img
-                    src={business.image_url}
-                    alt={business.name}
-                    className="w-full h-full object-cover"
-                  />
+      {/* Business grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {businesses.map((business) => (
+          <div key={business.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            {/* Business image */}
+            <div className="relative h-48">
+              <img
+                src={business.image}
+                alt={business.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400';
+                }}
+              />
+              {business.verified && (
+                <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs">
+                  ✓ Verified
                 </div>
+              )}
+              <button
+                onClick={() => toggleFavorite(business.id)}
+                className={`absolute top-2 left-2 p-2 rounded-full ${
+                  favorites.has(business.id) 
+                    ? 'bg-red-500 text-white' 
+                    : 'bg-white text-gray-600'
+                } hover:scale-110 transition-transform`}
+              >
+                ♥
+              </button>
+            </div>
 
-                {/* Business Info */}
-                <div className="flex-1 p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{business.name}</h3>
-                      <p className="text-sm text-gray-600">{business.category}</p>
-                      <p className="text-xs text-purple-600 font-medium">{business.minority_type}</p>
-                    </div>
-                    <button 
-                      onClick={() => toggleFavorite(business.id)}
-                      className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-                    >
-                      <Heart 
-                        size={18} 
-                        className={favorites.has(business.id) ? 'text-red-500 fill-current' : 'text-gray-400'} 
-                      />
-                    </button>
-                  </div>
+            {/* Business info */}
+            <div className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-lg font-semibold text-gray-800">{business.name}</h3>
+                <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                  {business.category}
+                </span>
+              </div>
 
-                  {/* Rating and Distance */}
-                  <div className="flex items-center space-x-4 mb-3">
-                    <div className="flex items-center space-x-1">
-                      {renderStars(business.average_rating)}
-                      <span className="text-sm text-gray-600 ml-1">
-                        {business.average_rating > 0 ? business.average_rating : 'New'} ({business.review_count})
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1 text-sm text-gray-600">
-                      <MapPin size={12} />
-                      <span>{business.city}, {business.state}</span>
-                    </div>
-                  </div>
+              <p className="text-sm text-gray-600 mb-2">{business.owner_ethnicity}</p>
+              <p className="text-gray-700 text-sm mb-3 line-clamp-2">{business.description}</p>
 
-                  {/* Description */}
-                  <p className="text-sm text-gray-700 mb-3 line-clamp-2">
-                    {business.description}
-                  </p>
-
-                  {/* Action Buttons */}
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 text-xs"
-                    >
-                      <Phone className="mr-1" size={14} />
-                      Call
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="flex-1 text-xs bg-purple-600 hover:bg-purple-700"
-                      onClick={() => handleBusinessClick(business)}
-                    >
-                      View Details
-                    </Button>
-                  </div>
+              <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+                <div className="flex items-center">
+                  <span className="text-yellow-500">★</span>
+                  <span className="ml-1">{business.rating}</span>
+                  <span className="ml-1">({business.reviews_count} reviews)</span>
                 </div>
               </div>
+
+              <div className="text-sm text-gray-600 mb-3">
+                <p>{business.address}</p>
+                <p>{business.phone}</p>
+              </div>
+
+              <button className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                View Details
+              </button>
             </div>
-          ))
-        )}
+          </div>
+        ))}
       </div>
 
-      {/* Load More Button */}
-      {filteredBusinesses.length > 0 && (
-        <div className="px-6 py-4">
-          <Button
-            variant="outline"
-            className="w-full py-3 text-purple-600 border-purple-600 hover:bg-purple-50"
-            onClick={() => {
-              // Simple implementation: show alert for now, can be enhanced later
-              alert('Load More Businesses feature coming soon! This will load additional businesses from the database.')
-            }}
-          >
+      {/* Load more button */}
+      {businesses.length > 0 && (
+        <div className="text-center">
+          <button className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors">
             Load More Businesses
-          </Button>
+          </button>
+        </div>
+      )}
+
+      {/* No results */}
+      {businesses.length === 0 && (
+        <div className="text-center py-12">
+          <div className="text-gray-500 text-lg mb-4">No businesses found</div>
+          <p className="text-gray-400">
+            Try adjusting your search criteria or check back later for new listings.
+          </p>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default BusinessListings
-
+export default BusinessListings;
