@@ -9,7 +9,7 @@ import SubscriptionPlans from './components/SubscriptionPlans'
 import SubscriptionStatus from './components/SubscriptionStatus'
 import BusinessAnalytics from './components/BusinessAnalytics'
 import AddBusiness from './components/AddBusiness'
-import { analyticsAPI } from './services/api'
+import analytics from './services/analytics'
 import './App.css'
 
 function App() {
