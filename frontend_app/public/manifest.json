@@ -1,91 +1,77 @@
 {
-  "name": "Melanin Market - Minority Business Directory",
+  "name": "Melanin Market",
   "short_name": "Melanin Market",
   "description": "Discover and support minority-owned businesses in your community",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#8B4513",
-  "theme_color": "#D2691E",
+  "background_color": "#ffffff",
+  "theme_color": "#f97316",
   "orientation": "portrait-primary",
   "scope": "/",
-  "lang": "en-US",
-  "categories": ["business", "lifestyle", "shopping"],
+  "lang": "en",
+  "categories": ["business", "shopping", "lifestyle"],
   "icons": [
     {
-      "src": "/icons/icon-72x72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
     },
     {
-      "src": "/icons/icon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
     },
     {
-      "src": "/icons/icon-128x128.png",
-      "sizes": "128x128",
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-192x192.png",
+      "src": "/android-chrome-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
+      "src": "/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "Find Businesses",
+      "name": "Search Businesses",
       "short_name": "Search",
-      "description": "Search for minority-owned businesses",
-      "url": "/search",
-      "icons": [{ "src": "/icons/search-icon.png", "sizes": "96x96" }]
+      "description": "Find minority-owned businesses near you",
+      "url": "/?action=search",
+      "icons": [
+        {
+          "src": "/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
-      "name": "My Favorites",
-      "short_name": "Favorites",
-      "description": "View your favorite businesses",
-      "url": "/favorites",
-      "icons": [{ "src": "/icons/heart-icon.png", "sizes": "96x96" }]
+      "name": "Add Business",
+      "short_name": "Add",
+      "description": "Add your minority-owned business",
+      "url": "/?action=add",
+      "icons": [
+        {
+          "src": "/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "screenshots": [
     {
-      "src": "/screenshots/desktop-screenshot.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/screenshots/mobile-screenshot.png",
-      "sizes": "375x812",
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "form_factor": "narrow"
     }
