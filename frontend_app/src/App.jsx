@@ -536,5 +536,349 @@ function App() {
 
         <div style={styles.bottomNav}>
           <div style={styles.navContainer}>
-            <button onClick={() => navigateT
-(Content truncated due to size limit. Use page ranges or line ranges to read remaining content)
+            <button onClick={() => navigateToView('landing')} style={styles.navButton}>
+              <div style={{ ...styles.navIcon, color: '#9ca3af' }}>🏠</div>
+              <span style={{ ...styles.navText, color: '#9ca3af' }}>Home</span>
+            </button>
+            <button style={styles.navButton}>
+              <div style={{ ...styles.navIcon, color: '#f97316' }}>♥</div>
+              <span style={{ ...styles.navText, color: '#f97316', fontWeight: '600' }}>Favorites</span>
+            </button>
+            <button onClick={() => navigateToView('listings')} style={styles.navButton}>
+              <div style={{ ...styles.navIcon, color: '#9ca3af' }}>🔍</div>
+              <span style={{ ...styles.navText, color: '#9ca3af' }}>Search</span>
+            </button>
+            <button onClick={() => navigateToView('profile')} style={styles.navButton}>
+              <div style={{ ...styles.navIcon, color: '#9ca3af' }}>👤</div>
+              <span style={{ ...styles.navText, color: '#9ca3af' }}>Profile</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Profile View
+  if (currentView === 'profile') {
+    return (
+      <div style={styles.container}>
+        <div style={{ backgroundColor: 'white', padding: '1rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <button onClick={() => navigateToView('landing')} style={styles.backButton}>
+              ← Back
+            </button>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1f2937' }}>
+              Profile
+            </h1>
+            <div style={{ width: '3rem' }}></div>
+          </div>
+        </div>
+
+        <div style={{ padding: '2rem 1rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+            <div style={{ 
+              width: '5rem', 
+              height: '5rem', 
+              backgroundColor: '#f97316', 
+              borderRadius: '50%', 
+              margin: '0 auto 1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '2rem',
+              color: 'white'
+            }}>
+              👤
+            </div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937', marginBottom: '0.5rem' }}>
+              Welcome to Melanin Market
+            </h2>
+            <p style={{ color: '#6b7280' }}>
+              Discover and support minority-owned businesses in your community
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={styles.featureCard}>
+              <h3 style={styles.featureTitle}>🏪 List Your Business</h3>
+              <p style={styles.featureDescription}>
+                Are you a minority business owner? Get your business featured on Melanin Market and connect with customers who want to support you.
+              </p>
+              <button style={{ ...styles.button, marginTop: '1rem' }}>
+                Add Your Business
+              </button>
+            </div>
+
+            <div style={styles.featureCard}>
+              <h3 style={styles.featureTitle}>📱 Get the App</h3>
+              <p style={styles.featureDescription}>
+                Install Melanin Market on your phone for quick access to local minority-owned businesses wherever you go.
+              </p>
+              <button style={{ ...styles.buttonSecondary, marginTop: '1rem' }}>
+                Install App
+              </button>
+            </div>
+
+            <div style={styles.featureCard}>
+              <h3 style={styles.featureTitle}>💬 Share Feedback</h3>
+              <p style={styles.featureDescription}>
+                Help us improve Melanin Market by sharing your thoughts and suggestions.
+              </p>
+              <button style={{ ...styles.buttonSecondary, marginTop: '1rem' }}>
+                Send Feedback
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ height: '5rem' }}></div>
+
+        <div style={styles.bottomNav}>
+          <div style={styles.navContainer}>
+            <button onClick={() => navigateToView('landing')} style={styles.navButton}>
+              <div style={{ ...styles.navIcon, color: '#9ca3af' }}>🏠</div>
+              <span style={{ ...styles.navText, color: '#9ca3af' }}>Home</span>
+            </button>
+            <button onClick={() => navigateToView('favorites')} style={styles.navButton}>
+              <div style={{ ...styles.navIcon, color: '#9ca3af' }}>♥</div>
+              <span style={{ ...styles.navText, color: '#9ca3af' }}>Favorites</span>
+            </button>
+            <button onClick={() => navigateToView('listings')} style={styles.navButton}>
+              <div style={{ ...styles.navIcon, color: '#9ca3af' }}>🔍</div>
+              <span style={{ ...styles.navText, color: '#9ca3af' }}>Search</span>
+            </button>
+            <button style={styles.navButton}>
+              <div style={{ ...styles.navIcon, color: '#f97316' }}>👤</div>
+              <span style={{ ...styles.navText, color: '#f97316', fontWeight: '600' }}>Profile</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Business Listings View
+  if (currentView === 'listings') {
+    return (
+      <div style={styles.container}>
+        <div style={{ backgroundColor: 'white', padding: '1rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <button onClick={() => navigateToView('landing')} style={styles.backButton}>
+              ← Back
+            </button>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1f2937' }}>
+              {searchCity ? `${searchCity}, ${searchState}` : 'All Businesses'}
+            </h1>
+            <div style={{ width: '3rem' }}></div>
+          </div>
+        </div>
+
+        <div style={{ padding: '1rem' }}>
+          <div style={styles.categoryFilter}>
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                style={{
+                  ...styles.categoryButton,
+                  ...(selectedCategory === category ? styles.categoryButtonActive : {})
+                }}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1rem' }}>
+            {filteredBusinesses.length} {filteredBusinesses.length === 1 ? 'business' : 'businesses'} found
+          </p>
+
+          {filteredBusinesses.map((business) => (
+            <div key={business.id} style={{ ...styles.businessCard, position: 'relative' }}>
+              <button
+                onClick={() => toggleFavorite(business.id)}
+                style={{
+                  ...styles.favoriteButton,
+                  color: favorites.includes(business.id) ? '#ef4444' : '#d1d5db'
+                }}
+              >
+                ♥
+              </button>
+
+              <img src={business.image} alt={business.name} style={styles.businessImage} />
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                <h3 style={styles.businessName}>{business.name}</h3>
+                <span style={styles.businessCategory}>{business.category}</span>
+              </div>
+
+              <p style={styles.businessEthnicity}>{business.owner_ethnicity}</p>
+              <p style={styles.businessDescription}>{business.description}</p>
+
+              <div style={styles.rating}>
+                <span style={styles.stars}>★★★★★</span>
+                <span style={{ fontWeight: '600' }}>{business.rating}</span>
+                <span style={{ marginLeft: '0.25rem' }}>({business.reviews_count})</span>
+                {business.verified && (
+                  <span style={{ marginLeft: '0.5rem', color: '#10b981', fontSize: '0.875rem' }}>✓ Verified</span>
+                )}
+              </div>
+
+              <div style={styles.businessInfo}>
+                <span style={{ marginRight: '0.5rem' }}>📍</span>
+                {business.address}
+              </div>
+              <div style={styles.businessInfo}>
+                <span style={{ marginRight: '0.5rem' }}>📞</span>
+                {business.phone}
+              </div>
+              <div style={styles.businessInfo}>
+                <span style={{ marginRight: '0.5rem' }}>🕒</span>
+                {business.hours}
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                <button style={{ ...styles.button, flex: 1 }}>
+                  View Details
+                </button>
+                <button style={{ ...styles.buttonSecondary, flex: 1 }}>
+                  Contact
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ height: '5rem' }}></div>
+
+        <div style={styles.bottomNav}>
+          <div style={styles.navContainer}>
+            <button onClick={() => navigateToView('landing')} style={styles.navButton}>
+              <div style={{ ...styles.navIcon, color: '#9ca3af' }}>🏠</div>
+              <span style={{ ...styles.navText, color: '#9ca3af' }}>Home</span>
+            </button>
+            <button onClick={() => navigateToView('favorites')} style={styles.navButton}>
+              <div style={{ ...styles.navIcon, color: '#9ca3af' }}>♥</div>
+              <span style={{ ...styles.navText, color: '#9ca3af' }}>Favorites</span>
+            </button>
+            <button style={styles.navButton}>
+              <div style={{ ...styles.navIcon, color: '#f97316' }}>🔍</div>
+              <span style={{ ...styles.navText, color: '#f97316', fontWeight: '600' }}>Search</span>
+            </button>
+            <button onClick={() => navigateToView('profile')} style={styles.navButton}>
+              <div style={{ ...styles.navIcon, color: '#9ca3af' }}>👤</div>
+              <span style={{ ...styles.navText, color: '#9ca3af' }}>Profile</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Landing Page (Default View)
+  return (
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <div style={styles.logoContainer}>
+          <div style={styles.logo}>🛍️</div>
+          <div>
+            <div style={styles.title}>MELANIN MARKET</div>
+            <div style={styles.subtitle}>Discover • Support • Thrive</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.content}>
+        <div style={styles.heroText}>
+          <h1 style={styles.heroTitle}>Discover Minority-Owned Businesses</h1>
+          <p style={styles.heroDescription}>
+            Support local entrepreneurs and build stronger communities together. Find authentic businesses owned by Black, Hispanic, Asian, Native American, and other minority entrepreneurs.
+          </p>
+        </div>
+
+        <div style={styles.searchSection}>
+          <input
+            type="text"
+            placeholder="Enter City, State (e.g., Buffalo, NY)"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            style={styles.input}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          
+          <button onClick={handleSearch} style={styles.button}>
+            🔍 Find Businesses
+          </button>
+
+          <button onClick={() => navigateToView('profile')} style={styles.buttonSecondary}>
+            ➕ List Your Business
+          </button>
+        </div>
+
+        <div style={styles.popularCities}>
+          <p style={{ color: '#4b5563', marginBottom: '1rem', fontWeight: '600' }}>Popular Cities:</p>
+          <div>
+            <button onClick={() => handleCityClick('Buffalo', 'NY')} style={styles.cityButton}>
+              Buffalo, NY
+            </button>
+            <button onClick={() => handleCityClick('Rochester', 'NY')} style={styles.cityButton}>
+              Rochester, NY
+            </button>
+            <button onClick={() => handleCityClick('Syracuse', 'NY')} style={styles.cityButton}>
+              Syracuse, NY
+            </button>
+          </div>
+        </div>
+
+        <div style={styles.featureCard}>
+          <div style={styles.featureIcon}>🔍</div>
+          <h3 style={styles.featureTitle}>Discover Local</h3>
+          <p style={styles.featureDescription}>
+            Find authentic minority-owned businesses in your community, from restaurants and cafes to tech companies and wellness centers.
+          </p>
+        </div>
+
+        <div style={styles.featureCard}>
+          <div style={styles.featureIcon}>💝</div>
+          <h3 style={styles.featureTitle}>Support & Save</h3>
+          <p style={styles.featureDescription}>
+            Save your favorite businesses and support entrepreneurs who are building stronger, more diverse communities.
+          </p>
+        </div>
+
+        <div style={styles.featureCard}>
+          <div style={styles.featureIcon}>🌟</div>
+          <h3 style={styles.featureTitle}>Build Community</h3>
+          <p style={styles.featureDescription}>
+            Connect with business owners, leave reviews, and help create a thriving ecosystem of minority-owned enterprises.
+          </p>
+        </div>
+      </div>
+
+      <div style={{ height: '5rem' }}></div>
+
+      <div style={styles.bottomNav}>
+        <div style={styles.navContainer}>
+          <button style={styles.navButton}>
+            <div style={{ ...styles.navIcon, color: '#f97316' }}>🏠</div>
+            <span style={{ ...styles.navText, color: '#f97316', fontWeight: '600' }}>Home</span>
+          </button>
+          <button onClick={() => navigateToView('favorites')} style={styles.navButton}>
+            <div style={{ ...styles.navIcon, color: '#9ca3af' }}>♥</div>
+            <span style={{ ...styles.navText, color: '#9ca3af' }}>Favorites</span>
+          </button>
+          <button onClick={() => navigateToView('listings')} style={styles.navButton}>
+            <div style={{ ...styles.navIcon, color: '#9ca3af' }}>🔍</div>
+            <span style={{ ...styles.navText, color: '#9ca3af' }}>Search</span>
+          </button>
+          <button onClick={() => navigateToView('profile')} style={styles.navButton}>
+            <div style={{ ...styles.navIcon, color: '#9ca3af' }}>👤</div>
+            <span style={{ ...styles.navText, color: '#9ca3af' }}>Profile</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
