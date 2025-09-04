@@ -408,7 +408,8 @@ function App() {
   const renderLandingPage = () => (
     <div style={styles.container}>
       <div style={styles.header}>
-        <div style={styles.logo}>🛍️</div>
+        <img src="/logo.png" alt="Melanin Market" style={styles.logo} onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block';}} />
+<div style={{...styles.logo, display: 'none'}}>🛍️</div>
         <div>
           <div style={styles.title}>MELANIN MARKET</div>
           <div style={styles.subtitle}>Discover • Support • Thrive</div>
