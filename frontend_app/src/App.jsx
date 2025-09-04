@@ -150,12 +150,14 @@ function App() {
       background: 'rgba(255, 255, 255, 0.1)',
     },
     logo: {
-      fontSize: '24px',
+      width: '40px',
+      height: '40px',
       marginRight: '10px',
-      background: '#ea580c',
-      padding: '8px',
       borderRadius: '8px',
-      color: 'white',
+      objectFit: 'contain',
+      background: 'white',
+      padding: '4px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     },
     title: {
       fontSize: '28px',
