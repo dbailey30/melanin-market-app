@@ -8,11 +8,11 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // EmailJS Configuration - Replace with your actual values from EmailJS dashboard
+  // EmailJS Configuration - REPLACE WITH YOUR ACTUAL VALUES
   const EMAILJS_CONFIG = {
     SERVICE_ID: 'service_l1mf75l', // 
     TEMPLATE_ID: 'template_1zwylhd', // 
-    PUBLIC_KEY: 'user_Jv0z8LO2xSTdzuvDz' // 
+    PUBLIC_KEY: 'user_Jv0z8LO2xSTdzuvDz' //
   };
 
   // Initialize EmailJS
@@ -20,28 +20,12 @@ function App() {
     emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
   }, []);
 
-  // Handle PWA installation
-  const handleInstallApp = () => {
-    if (window.deferredPrompt) {
-      window.deferredPrompt.prompt();
-      window.deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the install prompt');
-        }
-        window.deferredPrompt = null;
-      });
-    } else {
-      alert('To install this app:\n\n• On Chrome/Edge: Look for the install icon in the address bar\n• On Safari: Tap Share → Add to Home Screen\n• On Firefox: Look for the install option in the menu');
-    }
-  };
-
   // Handle business form submission with EmailJS
   const handleBusinessSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Get form data
       const formData = new FormData(e.target);
       const businessData = {
         business_name: formData.get('businessName'),
@@ -62,7 +46,6 @@ function App() {
         to_email: 'admin@melanin-market.com'
       };
 
-      // Send email via EmailJS
       const result = await emailjs.send(
         EMAILJS_CONFIG.SERVICE_ID,
         EMAILJS_CONFIG.TEMPLATE_ID,
@@ -71,33 +54,20 @@ function App() {
       );
 
       console.log('Email sent successfully:', result);
-      
-      // Show success message
       alert('🎉 Success! Your business submission has been sent for review.\n\nWe will contact you at ' + businessData.business_email + ' within 2-3 business days.\n\nThank you for joining the Melanin Market community!');
-      
-      // Reset form and navigate back
       e.target.reset();
       setCurrentView('profile');
 
     } catch (error) {
       console.error('Failed to send email:', error);
-      
-      // Show error message with fallback option
-      alert('❌ Submission Error\n\nThere was an issue sending your submission. Please try again or contact us directly at admin@melanin-market.com\n\nError details: ' + error.text || error.message);
+      alert('❌ Submission Error\n\nThere was an issue sending your submission. Please try again or contact us directly at admin@melanin-market.com\n\nError details: ' + (error.text || error.message));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Navigation functions
-  const navigateToView = (view) => {
-    setCurrentView(view);
-  };
-
-  const handleSearch = () => {
-    setCurrentView('businesses');
-  };
-
+  const navigateToView = (view) => setCurrentView(view);
+  const handleSearch = () => setCurrentView('businesses');
   const toggleFavorite = (businessId) => {
     setFavorites(prev => 
       prev.includes(businessId) 
@@ -106,18 +76,32 @@ function App() {
     );
   };
 
-  // Business data
+  const handleInstallApp = () => {
+    if (window.deferredPrompt) {
+      window.deferredPrompt.prompt();
+      window.deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        }
+        window.deferredPrompt = null;
+      });
+    } else {
+      alert('To install this app:\n\n• On Chrome/Edge: Look for the install icon in the address bar\n• On Safari: Tap Share → Add to Home Screen\n• On Firefox: Look for the install option in the menu');
+    }
+  };
+
+  // Sample business data
   const businesses = [
     {
       id: 1,
       name: 'Soul Food Kitchen',
       type: 'Restaurant',
       owner: 'Black-owned',
-      description: 'Authentic soul food restaurant serving the community for over 20 years. Family recipes passed down through generations.',
+      description: 'Authentic soul food restaurant serving the community for over 20 years.',
       rating: '4.5 (127)',
       address: '123 Main St, Buffalo, NY',
       phone: '(716) 555-0123',
-      hours: 'Mon-Sat: 11AM-9PM, Sun: 12PM-8PM',
+      hours: 'Mon-Sat: 11AM-9PM',
       image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=200&fit=crop',
       verified: true,
     },
@@ -126,7 +110,7 @@ function App() {
       name: 'Tech Solutions Plus',
       type: 'Technology',
       owner: 'Asian-owned',
-      description: 'Full-service IT consulting and software development company specializing in small business solutions.',
+      description: 'Full-service IT consulting and software development company.',
       rating: '4.8 (89)',
       address: '456 Tech Ave, Buffalo, NY',
       phone: '(716) 555-0456',
@@ -139,51 +123,12 @@ function App() {
       name: "Abuela's Market",
       type: 'Grocery',
       owner: 'Hispanic-owned',
-      description: 'Family-owned grocery store with authentic Hispanic foods, fresh produce, and traditional ingredients.',
+      description: 'Family-owned grocery store with authentic Hispanic foods.',
       rating: '4.6 (203)',
       address: '789 Market St, Rochester, NY',
       phone: '(585) 555-0789',
       hours: 'Daily: 8AM-10PM',
       image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop',
-      verified: true,
-    },
-    {
-      id: 4,
-      name: 'Harmony Hair Salon',
-      type: 'Beauty',
-      owner: 'Black-owned',
-      description: 'Professional hair care and styling for all hair types and textures. Specializing in natural hair care.',
-      rating: '4.9 (156)',
-      address: '321 Style Ave, Syracuse, NY',
-      phone: '(315) 555-0321',
-      hours: 'Tue-Sat: 9AM-7PM',
-      image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=200&fit=crop',
-      verified: true,
-    },
-    {
-      id: 5,
-      name: 'Artisan Coffee Roasters',
-      type: 'Coffee',
-      owner: 'Latino-owned',
-      description: 'Small-batch coffee roasters committed to fair trade and supporting coffee farmers worldwide.',
-      rating: '4.7 (92)',
-      address: '654 Bean St, Buffalo, NY',
-      phone: '(716) 555-0654',
-      hours: 'Mon-Fri: 6AM-6PM, Sat-Sun: 7AM-5PM',
-      image: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=400&h=200&fit=crop',
-      verified: true,
-    },
-    {
-      id: 6,
-      name: 'Native Wellness Center',
-      type: 'Health',
-      owner: 'Native American-owned',
-      description: 'Holistic wellness center offering traditional healing practices and modern wellness services.',
-      rating: '4.8 (74)',
-      address: '987 Healing Way, Syracuse, NY',
-      phone: '(315) 555-0987',
-      hours: 'Mon-Fri: 8AM-8PM, Sat: 9AM-5PM',
-      image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=200&fit=crop',
       verified: true,
     },
   ];
@@ -469,7 +414,6 @@ function App() {
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
@@ -516,15 +460,9 @@ function App() {
           
           <div style={{ marginTop: '24px' }}>
             <p style={{ fontSize: '16px', color: '#6b7280', marginBottom: '12px' }}>Popular Cities:</p>
-            <button style={{...styles.button, ...styles.cityButton}} onClick={handleSearch}>
-              Buffalo, NY
-            </button>
-            <button style={{...styles.button, ...styles.cityButton}} onClick={handleSearch}>
-              Rochester, NY
-            </button>
-            <button style={{...styles.button, ...styles.cityButton}} onClick={handleSearch}>
-              Syracuse, NY
-            </button>
+            <button style={{...styles.button, ...styles.cityButton}} onClick={handleSearch}>Buffalo, NY</button>
+            <button style={{...styles.button, ...styles.cityButton}} onClick={handleSearch}>Rochester, NY</button>
+            <button style={{...styles.button, ...styles.cityButton}} onClick={handleSearch}>Syracuse, NY</button>
           </div>
         </div>
 
@@ -558,58 +496,16 @@ function App() {
   // Business Listings
   const renderBusinessListings = () => (
     <div style={styles.container}>
-      <button style={styles.backButton} onClick={() => navigateToView('landing')}>
-        ← Back
-      </button>
+      <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
       
       <div style={styles.content}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>
-          All Businesses
-        </h1>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>All Businesses</h1>
         
         <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-          <button 
-            style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'All' ? {background: '#ea580c', color: 'white'} : {})}}
-            onClick={() => setSelectedCategory('All')}
-          >
-            All
-          </button>
-          <button 
-            style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Restaurant' ? {background: '#ea580c', color: 'white'} : {})}}
-            onClick={() => setSelectedCategory('Restaurant')}
-          >
-            Restaurant
-          </button>
-          <button 
-            style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Technology' ? {background: '#ea580c', color: 'white'} : {})}}
-            onClick={() => setSelectedCategory('Technology')}
-          >
-            Technology
-          </button>
-          <button 
-            style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Beauty' ? {background: '#ea580c', color: 'white'} : {})}}
-            onClick={() => setSelectedCategory('Beauty')}
-          >
-            Beauty
-          </button>
-          <button 
-            style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Grocery' ? {background: '#ea580c', color: 'white'} : {})}}
-            onClick={() => setSelectedCategory('Grocery')}
-          >
-            Grocery
-          </button>
-          <button 
-            style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Coffee' ? {background: '#ea580c', color: 'white'} : {})}}
-            onClick={() => setSelectedCategory('Coffee')}
-          >
-            Coffee
-          </button>
-          <button 
-            style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Health' ? {background: '#ea580c', color: 'white'} : {})}}
-            onClick={() => setSelectedCategory('Health')}
-          >
-            Health
-          </button>
+          <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'All' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('All')}>All</button>
+          <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Restaurant' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('Restaurant')}>Restaurant</button>
+          <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Technology' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('Technology')}>Technology</button>
+          <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Grocery' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('Grocery')}>Grocery</button>
         </div>
         
         <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}>
@@ -667,12 +563,8 @@ function App() {
             <div style={styles.businessInfo}>🕒 {business.hours}</div>
             
             <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-              <button style={{...styles.button, ...styles.primaryButton, flex: 1}}>
-                View Details
-              </button>
-              <button style={{...styles.button, ...styles.secondaryButton, flex: 1}}>
-                Contact
-              </button>
+              <button style={{...styles.button, ...styles.primaryButton, flex: 1}}>View Details</button>
+              <button style={{...styles.button, ...styles.secondaryButton, flex: 1}}>Contact</button>
             </div>
           </div>
         ))}
@@ -683,9 +575,7 @@ function App() {
   // Add Business Form with EmailJS Integration
   const renderAddBusiness = () => (
     <div style={styles.container}>
-      <button style={styles.backButton} onClick={() => navigateToView('profile')}>
-        ← Back
-      </button>
+      <button style={styles.backButton} onClick={() => navigateToView('profile')}>← Back</button>
       
       <div style={styles.formContainer}>
         <h1 style={styles.formTitle}>Add Your Business</h1>
@@ -755,13 +645,13 @@ function App() {
           </div>
           
           <div style={styles.formGroup}>
-            <label style={styles.label}>Website</label>
-            <input style={styles.input} type="url" name="businessWebsite" placeholder="https://yourbusiness.com" />
+            <label style={styles.label}>Email *</label>
+            <input style={styles.input} type="email" name="businessEmail" placeholder="contact@yourbusiness.com" required />
           </div>
           
           <div style={styles.formGroup}>
-            <label style={styles.label}>Email *</label>
-            <input style={styles.input} type="email" name="businessEmail" placeholder="contact@yourbusiness.com" required />
+            <label style={styles.label}>Website</label>
+            <input style={styles.input} type="url" name="businessWebsite" placeholder="https://yourbusiness.com" />
           </div>
           
           <div style={styles.formGroup}>
@@ -771,9 +661,6 @@ function App() {
           
           <div style={styles.formGroup}>
             <label style={styles.label}>Business Verification</label>
-            <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
-              To verify your business ownership, please provide one of the following:
-            </p>
             <select style={styles.select} name="verificationMethod">
               <option value="">Select verification method</option>
               <option value="business-license">Business License Number</option>
@@ -807,25 +694,17 @@ function App() {
   // Favorites Page
   const renderFavorites = () => (
     <div style={styles.container}>
-      <button style={styles.backButton} onClick={() => navigateToView('landing')}>
-        ← Back
-      </button>
+      <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
       
       <div style={styles.content}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '40px' }}>
-          My Favorites
-        </h1>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '40px' }}>My Favorites</h1>
         
         {favoriteBusinesses.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>💝</div>
             <h2 style={{ fontSize: '20px', color: '#1f2937', marginBottom: '8px' }}>No favorites yet</h2>
-            <p style={{ color: '#6b7280', marginBottom: '24px' }}>
-              Start exploring businesses and add them to your favorites!
-            </p>
-            <button style={{...styles.button, ...styles.primaryButton}} onClick={() => navigateToView('businesses')}>
-              Discover Businesses
-            </button>
+            <p style={{ color: '#6b7280', marginBottom: '24px' }}>Start exploring businesses and add them to your favorites!</p>
+            <button style={{...styles.button, ...styles.primaryButton}} onClick={() => navigateToView('businesses')}>Discover Businesses</button>
           </div>
         ) : (
           favoriteBusinesses.map((business) => (
@@ -857,9 +736,7 @@ function App() {
               <div style={styles.businessType}>{business.owner}</div>
               <p style={styles.businessDescription}>{business.description}</p>
               
-              <div style={styles.rating}>
-                ⭐⭐⭐⭐⭐ {business.rating} {business.verified && '✓ Verified'}
-              </div>
+              <div style={styles.rating}>⭐⭐⭐⭐⭐ {business.rating} {business.verified && '✓ Verified'}</div>
               
               <div style={styles.businessInfo}>📍 {business.address}</div>
               <div style={styles.businessInfo}>📞 {business.phone}</div>
@@ -874,120 +751,75 @@ function App() {
   // Profile Page
   const renderProfile = () => (
     <div style={styles.container}>
-      <button style={styles.backButton} onClick={() => navigateToView('landing')}>
-        ← Back
-      </button>
+      <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
       
       <div style={styles.content}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{
-            width: '80px',
-            height: '80px',
-            background: '#ea580c',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 16px',
-            fontSize: '32px',
-            color: 'white',
-          }}>
-            👤
-          </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>
-            Welcome to Melanin Market
-          </h1>
-          <p style={{ color: '#6b7280' }}>
-            Discover and support minority-owned businesses in your community
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '40px' }}>Profile</h1>
+        
+        <div style={styles.featureCard}>
+          <div style={styles.featureIcon}>🏪</div>
+          <h3 style={styles.featureTitle}>Add Your Business</h3>
+          <p style={styles.featureDescription}>
+            Get your minority-owned business featured on Melanin Market and connect with customers who want to support you.
           </p>
+          <button style={{...styles.button, ...styles.primaryButton, marginTop: '16px'}} onClick={() => navigateToView('addBusiness')}>Add Your Business</button>
         </div>
 
         <div style={styles.featureCard}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '24px', marginRight: '12px' }}>🏪</span>
-            <h3 style={styles.featureTitle}>List Your Business</h3>
-          </div>
+          <div style={styles.featureIcon}>📱</div>
+          <h3 style={styles.featureTitle}>Install App</h3>
           <p style={styles.featureDescription}>
-            Are you a minority business owner? Get your business featured on Melanin Market and connect with customers who want to support you.
+            Install Melanin Market on your device for quick access to discover and support minority-owned businesses.
           </p>
-          <button style={{...styles.button, ...styles.primaryButton, marginTop: '12px'}} onClick={() => navigateToView('addBusiness')}>
-            Add Your Business
-          </button>
+          <button style={{...styles.button, ...styles.secondaryButton, marginTop: '16px'}} onClick={handleInstallApp}>Install App</button>
         </div>
 
         <div style={styles.featureCard}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '24px', marginRight: '12px' }}>📱</span>
-            <h3 style={styles.featureTitle}>Get the App</h3>
-          </div>
-          <p style={styles.featureDescription}>
-            Install Melanin Market on your phone for quick access to local minority-owned businesses wherever you go.
-          </p>
-          <button style={{...styles.button, ...styles.secondaryButton, marginTop: '12px'}} onClick={handleInstallApp}>
-            Install App
-          </button>
-        </div>
-
-        <div style={styles.featureCard}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '24px', marginRight: '12px' }}>💬</span>
-            <h3 style={styles.featureTitle}>Share Feedback</h3>
-          </div>
-          <p style={styles.featureDescription}>
-            Help us improve Melanin Market by sharing your thoughts and suggestions.
-          </p>
-          <button style={{...styles.button, ...styles.secondaryButton, marginTop: '12px'}} onClick={() => alert('Thank you for your interest in providing feedback! Please email us at feedback@melanin-market.com')}>
-            Send Feedback
-          </button>
+          <div style={styles.featureIcon}>💝</div>
+          <h3 style={styles.featureTitle}>My Favorites</h3>
+          <p style={styles.featureDescription}>View and manage your favorite minority-owned businesses.</p>
+          <button style={{...styles.button, ...styles.secondaryButton, marginTop: '16px'}} onClick={() => navigateToView('favorites')}>View Favorites ({favorites.length})</button>
         </div>
       </div>
     </div>
   );
 
-  // Bottom Navigation
-  const renderBottomNav = () => (
-    <div style={styles.bottomNav}>
-      <button 
-        style={{...styles.navButton, ...(currentView === 'landing' ? styles.activeNavButton : {})}}
-        onClick={() => navigateToView('landing')}
-      >
-        <div style={{ fontSize: '20px', marginBottom: '2px' }}>🏠</div>
-        <span>Home</span>
-      </button>
-      <button 
-        style={{...styles.navButton, ...(currentView === 'favorites' ? styles.activeNavButton : {})}}
-        onClick={() => navigateToView('favorites')}
-      >
-        <div style={{ fontSize: '20px', marginBottom: '2px' }}>♥</div>
-        <span>Favorites</span>
-      </button>
-      <button 
-        style={{...styles.navButton, ...(currentView === 'businesses' ? styles.activeNavButton : {})}}
-        onClick={() => navigateToView('businesses')}
-      >
-        <div style={{ fontSize: '20px', marginBottom: '2px' }}>🔍</div>
-        <span>Search</span>
-      </button>
-      <button 
-        style={{...styles.navButton, ...(currentView === 'profile' ? styles.activeNavButton : {})}}
-        onClick={() => navigateToView('profile')}
-      >
-        <div style={{ fontSize: '20px', marginBottom: '2px' }}>👤</div>
-        <span>Profile</span>
-      </button>
-    </div>
-  );
+  // Main render function
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'landing': return renderLandingPage();
+      case 'businesses': return renderBusinessListings();
+      case 'favorites': return renderFavorites();
+      case 'profile': return renderProfile();
+      case 'addBusiness': return renderAddBusiness();
+      default: return renderLandingPage();
+    }
+  };
 
-  // Main render
   return (
-    <>
-      {currentView === 'landing' && renderLandingPage()}
-      {currentView === 'businesses' && renderBusinessListings()}
-      {currentView === 'addBusiness' && renderAddBusiness()}
-      {currentView === 'favorites' && renderFavorites()}
-      {currentView === 'profile' && renderProfile()}
-      {renderBottomNav()}
-    </>
+    <div>
+      {renderCurrentView()}
+      
+      {/* Bottom Navigation */}
+      <div style={styles.bottomNav}>
+        <button style={{...styles.navButton, ...(currentView === 'landing' ? styles.activeNavButton : {})}} onClick={() => navigateToView('landing')}>
+          <div style={{ fontSize: '18px', marginBottom: '2px' }}>🏠</div>
+          <div>Home</div>
+        </button>
+        <button style={{...styles.navButton, ...(currentView === 'businesses' ? styles.activeNavButton : {})}} onClick={() => navigateToView('businesses')}>
+          <div style={{ fontSize: '18px', marginBottom: '2px' }}>🔍</div>
+          <div>Search</div>
+        </button>
+        <button style={{...styles.navButton, ...(currentView === 'favorites' ? styles.activeNavButton : {})}} onClick={() => navigateToView('favorites')}>
+          <div style={{ fontSize: '18px', marginBottom: '2px' }}>💝</div>
+          <div>Favorites</div>
+        </button>
+        <button style={{...styles.navButton, ...(currentView === 'profile' ? styles.activeNavButton : {})}} onClick={() => navigateToView('profile')}>
+          <div style={{ fontSize: '18px', marginBottom: '2px' }}>👤</div>
+          <div>Profile</div>
+        </button>
+      </div>
+    </div>
   );
 }
 
