@@ -1,10 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import emailjs from '@emailjs/browser';
 
 function App() {
   const [currentView, setCurrentView] = useState('landing');
   const [searchInput, setSearchInput] = useState('');
   const [favorites, setFavorites] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // EmailJS Configuration - Replace with your actual values from EmailJS dashboard
+  const EMAILJS_CONFIG = {
+    SERVICE_ID: 'service_l1mf75l', // 
+    TEMPLATE_ID: 'template_1zwylhd', // 
+    PUBLIC_KEY: 'user_Jv0z8LO2xSTdzuvDz' // 
+  };
+
+  // Initialize EmailJS
+  useEffect(() => {
+    emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+  }, []);
 
   // Handle PWA installation
   const handleInstallApp = () => {
@@ -21,11 +35,58 @@ function App() {
     }
   };
 
-  // Handle business form submission
-  const handleBusinessSubmit = (e) => {
+  // Handle business form submission with EmailJS
+  const handleBusinessSubmit = async (e) => {
     e.preventDefault();
-    alert('Thank you for submitting your business! We will review your application and contact you within 2-3 business days.');
-    setCurrentView('profile');
+    setIsSubmitting(true);
+
+    try {
+      // Get form data
+      const formData = new FormData(e.target);
+      const businessData = {
+        business_name: formData.get('businessName'),
+        business_category: formData.get('businessCategory'),
+        owner_ethnicity: formData.get('ownerEthnicity'),
+        business_description: formData.get('businessDescription'),
+        business_address: formData.get('businessAddress'),
+        business_city: formData.get('businessCity'),
+        business_state: formData.get('businessState'),
+        business_phone: formData.get('businessPhone'),
+        business_email: formData.get('businessEmail'),
+        business_website: formData.get('businessWebsite') || 'Not provided',
+        business_hours: formData.get('businessHours') || 'Not provided',
+        verification_method: formData.get('verificationMethod') || 'Not provided',
+        verification_details: formData.get('verificationDetails') || 'Not provided',
+        submission_date: new Date().toLocaleDateString(),
+        submission_time: new Date().toLocaleTimeString(),
+        to_email: 'admin@melanin-market.com'
+      };
+
+      // Send email via EmailJS
+      const result = await emailjs.send(
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID,
+        businessData,
+        EMAILJS_CONFIG.PUBLIC_KEY
+      );
+
+      console.log('Email sent successfully:', result);
+      
+      // Show success message
+      alert('🎉 Success! Your business submission has been sent for review.\n\nWe will contact you at ' + businessData.business_email + ' within 2-3 business days.\n\nThank you for joining the Melanin Market community!');
+      
+      // Reset form and navigate back
+      e.target.reset();
+      setCurrentView('profile');
+
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      
+      // Show error message with fallback option
+      alert('❌ Submission Error\n\nThere was an issue sending your submission. Please try again or contact us directly at admin@melanin-market.com\n\nError details: ' + error.text || error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Navigation functions
@@ -390,6 +451,14 @@ function App() {
       background: 'white',
       boxSizing: 'border-box',
     },
+    submitButton: {
+      background: isSubmitting ? '#9ca3af' : '#ea580c',
+      color: 'white',
+      width: '100%',
+      marginTop: '20px',
+      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+      opacity: isSubmitting ? 0.7 : 1,
+    },
   };
 
   // PWA install prompt handling
@@ -411,7 +480,7 @@ function App() {
     <div style={styles.container}>
       <div style={styles.header}>
         <img src="/logo.PNG" alt="Melanin Market" style={styles.logo} onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block';}} />
-<div style={{...styles.logo, display: 'none'}}>🛍️</div>
+        <div style={{...styles.logo, display: 'none'}}>🛍️</div>
         <div>
           <div style={styles.title}>MELANIN MARKET</div>
           <div style={styles.subtitle}>Discover • Support • Thrive</div>
@@ -611,7 +680,7 @@ function App() {
     </div>
   );
 
-  // Add Business Form
+  // Add Business Form with EmailJS Integration
   const renderAddBusiness = () => (
     <div style={styles.container}>
       <button style={styles.backButton} onClick={() => navigateToView('profile')}>
@@ -627,12 +696,12 @@ function App() {
         <form onSubmit={handleBusinessSubmit}>
           <div style={styles.formGroup}>
             <label style={styles.label}>Business Name *</label>
-            <input style={styles.input} type="text" placeholder="Enter your business name" required />
+            <input style={styles.input} type="text" name="businessName" placeholder="Enter your business name" required />
           </div>
           
           <div style={styles.formGroup}>
             <label style={styles.label}>Business Category *</label>
-            <select style={styles.select} required>
+            <select style={styles.select} name="businessCategory" required>
               <option value="">Select a category</option>
               <option value="restaurant">Restaurant</option>
               <option value="technology">Technology</option>
@@ -648,7 +717,7 @@ function App() {
           
           <div style={styles.formGroup}>
             <label style={styles.label}>Owner Ethnicity *</label>
-            <select style={styles.select} required>
+            <select style={styles.select} name="ownerEthnicity" required>
               <option value="">Select owner ethnicity</option>
               <option value="black">Black-owned</option>
               <option value="hispanic">Hispanic-owned</option>
@@ -661,43 +730,43 @@ function App() {
           
           <div style={styles.formGroup}>
             <label style={styles.label}>Business Description *</label>
-            <textarea style={styles.textarea} placeholder="Describe your business, what makes it special, and what you offer..." required></textarea>
+            <textarea style={styles.textarea} name="businessDescription" placeholder="Describe your business, what makes it special, and what you offer..." required></textarea>
           </div>
           
           <div style={styles.formGroup}>
             <label style={styles.label}>Address *</label>
-            <input style={styles.input} type="text" placeholder="Street address" required />
+            <input style={styles.input} type="text" name="businessAddress" placeholder="Street address" required />
           </div>
           
           <div style={{ display: 'flex', gap: '12px' }}>
             <div style={{...styles.formGroup, flex: 1}}>
               <label style={styles.label}>City *</label>
-              <input style={styles.input} type="text" placeholder="City" required />
+              <input style={styles.input} type="text" name="businessCity" placeholder="City" required />
             </div>
             <div style={{...styles.formGroup, flex: 1}}>
               <label style={styles.label}>State *</label>
-              <input style={styles.input} type="text" placeholder="State" required />
+              <input style={styles.input} type="text" name="businessState" placeholder="State" required />
             </div>
           </div>
           
           <div style={styles.formGroup}>
             <label style={styles.label}>Phone Number *</label>
-            <input style={styles.input} type="tel" placeholder="(555) 123-4567" required />
+            <input style={styles.input} type="tel" name="businessPhone" placeholder="(555) 123-4567" required />
           </div>
           
           <div style={styles.formGroup}>
             <label style={styles.label}>Website</label>
-            <input style={styles.input} type="url" placeholder="https://yourbusiness.com" />
+            <input style={styles.input} type="url" name="businessWebsite" placeholder="https://yourbusiness.com" />
           </div>
           
           <div style={styles.formGroup}>
             <label style={styles.label}>Email *</label>
-            <input style={styles.input} type="email" placeholder="contact@yourbusiness.com" required />
+            <input style={styles.input} type="email" name="businessEmail" placeholder="contact@yourbusiness.com" required />
           </div>
           
           <div style={styles.formGroup}>
             <label style={styles.label}>Business Hours</label>
-            <textarea style={styles.textarea} placeholder="Mon-Fri: 9AM-6PM, Sat: 10AM-4PM, Sun: Closed"></textarea>
+            <textarea style={styles.textarea} name="businessHours" placeholder="Mon-Fri: 9AM-6PM, Sat: 10AM-4PM, Sun: Closed"></textarea>
           </div>
           
           <div style={styles.formGroup}>
@@ -705,7 +774,7 @@ function App() {
             <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
               To verify your business ownership, please provide one of the following:
             </p>
-            <select style={styles.select}>
+            <select style={styles.select} name="verificationMethod">
               <option value="">Select verification method</option>
               <option value="business-license">Business License Number</option>
               <option value="ein">Employer Identification Number (EIN)</option>
@@ -716,11 +785,15 @@ function App() {
           
           <div style={styles.formGroup}>
             <label style={styles.label}>Verification Details</label>
-            <input style={styles.input} type="text" placeholder="Enter license number, EIN, or other verification info" />
+            <input style={styles.input} type="text" name="verificationDetails" placeholder="Enter license number, EIN, or other verification info" />
           </div>
           
-          <button style={{...styles.button, ...styles.primaryButton, width: '100%', marginTop: '20px'}} type="submit">
-            Submit Business for Review
+          <button 
+            style={{...styles.button, ...styles.submitButton}} 
+            type="submit" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? '📧 Sending Submission...' : '📤 Submit Business for Review'}
           </button>
           
           <p style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center', marginTop: '16px' }}>
@@ -878,28 +951,28 @@ function App() {
         style={{...styles.navButton, ...(currentView === 'landing' ? styles.activeNavButton : {})}}
         onClick={() => navigateToView('landing')}
       >
-        <span style={{ fontSize: '20px', marginBottom: '2px' }}>🏠</span>
+        <div style={{ fontSize: '20px', marginBottom: '2px' }}>🏠</div>
         <span>Home</span>
       </button>
       <button 
         style={{...styles.navButton, ...(currentView === 'favorites' ? styles.activeNavButton : {})}}
         onClick={() => navigateToView('favorites')}
       >
-        <span style={{ fontSize: '20px', marginBottom: '2px' }}>♥</span>
+        <div style={{ fontSize: '20px', marginBottom: '2px' }}>♥</div>
         <span>Favorites</span>
       </button>
       <button 
         style={{...styles.navButton, ...(currentView === 'businesses' ? styles.activeNavButton : {})}}
         onClick={() => navigateToView('businesses')}
       >
-        <span style={{ fontSize: '20px', marginBottom: '2px' }}>🔍</span>
+        <div style={{ fontSize: '20px', marginBottom: '2px' }}>🔍</div>
         <span>Search</span>
       </button>
       <button 
         style={{...styles.navButton, ...(currentView === 'profile' ? styles.activeNavButton : {})}}
         onClick={() => navigateToView('profile')}
       >
-        <span style={{ fontSize: '20px', marginBottom: '2px' }}>👤</span>
+        <div style={{ fontSize: '20px', marginBottom: '2px' }}>👤</div>
         <span>Profile</span>
       </button>
     </div>
@@ -907,14 +980,14 @@ function App() {
 
   // Main render
   return (
-    <div>
+    <>
       {currentView === 'landing' && renderLandingPage()}
       {currentView === 'businesses' && renderBusinessListings()}
       {currentView === 'addBusiness' && renderAddBusiness()}
       {currentView === 'favorites' && renderFavorites()}
       {currentView === 'profile' && renderProfile()}
       {renderBottomNav()}
-    </div>
+    </>
   );
 }
 
