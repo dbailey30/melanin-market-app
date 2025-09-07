@@ -12,7 +12,7 @@ function App() {
   const EMAILJS_CONFIG = {
     SERVICE_ID: 'service_l1mf75l', // 
     TEMPLATE_ID: 'template_1zwylhd', // 
-    PUBLIC_KEY: 'user_Jv0z8LO2xSTdzuvDz' //
+    PUBLIC_KEY: 'Jv0z8LO2xSTdzuvDz' //
   };
 
   // Initialize EmailJS
