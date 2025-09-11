@@ -1,0 +1,54 @@
+[
+  {
+    "id": 1,
+    "name": "Soul Food Kitchen",
+    "type": "Restaurant",
+    "owner": "Black-owned",
+    "description": "Authentic soul food restaurant serving the community for over 20 years.",
+    "rating": "4.5 (127)",
+    "address": "123 Main St, Buffalo, NY",
+    "phone": "(716) 555-0123",
+    "hours": "Mon-Sat: 11AM-9PM",
+    "email": "info@soulfoodkitchen.com",
+    "website": "https://soulfoodkitchen.com",
+    "image": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=200&fit=crop",
+    "verified": true,
+    "dateAdded": "2025-01-01",
+    "status": "approved"
+  },
+  {
+    "id": 2,
+    "name": "Tech Solutions Plus",
+    "type": "Technology",
+    "owner": "Asian-owned",
+    "description": "Full-service IT consulting and software development company.",
+    "rating": "4.8 (89)",
+    "address": "456 Tech Ave, Buffalo, NY",
+    "phone": "(716) 555-0456",
+    "hours": "Mon-Fri: 9AM-6PM",
+    "email": "contact@techsolutionsplus.com",
+    "website": "https://techsolutionsplus.com",
+    "image": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=200&fit=crop",
+    "verified": true,
+    "dateAdded": "2025-01-02",
+    "status": "approved"
+  },
+  {
+    "id": 3,
+    "name": "Abuela's Market",
+    "type": "Grocery",
+    "owner": "Hispanic-owned",
+    "description": "Family-owned grocery store with authentic Hispanic foods.",
+    "rating": "4.6 (203)",
+    "address": "789 Market St, Rochester, NY",
+    "phone": "(585) 555-0789",
+    "hours": "Daily: 8AM-10PM",
+    "email": "info@abuelasmarket.com",
+    "website": "https://abuelasmarket.com",
+    "image": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop",
+    "verified": true,
+    "dateAdded": "2025-01-03",
+    "status": "approved"
+  }
+]
+
