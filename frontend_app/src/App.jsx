@@ -7,18 +7,161 @@ function App() {
   const [favorites, setFavorites] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [businesses, setBusinesses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Admin state
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [editingBusiness, setEditingBusiness] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  // Admin password - Change this to something secure
+  const ADMIN_PASSWORD = 'melanin2025admin';
 
   // EmailJS Configuration - REPLACE WITH YOUR ACTUAL VALUES
   const EMAILJS_CONFIG = {
-    SERVICE_ID: 'service_l1mf75l', // 
-    TEMPLATE_ID: 'template_1zwylhd', // 
-    PUBLIC_KEY: 'Jv0z8LO2xSTdzuvDz' //
+    SERVICE_ID: 'service_l1mf75l',
+    TEMPLATE_ID: 'template_1zwylhd',
+    PUBLIC_KEY: 'jv0z8LO2xSTdzuvDz'
   };
 
   // Initialize EmailJS
   useEffect(() => {
     emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
   }, []);
+
+  // Load businesses from JSON file
+  useEffect(() => {
+    const loadBusinesses = async () => {
+      try {
+        const response = await fetch('/businesses.json');
+        if (response.ok) {
+          const data = await response.json();
+          setBusinesses(data);
+        } else {
+          // Fallback to sample data if file doesn't exist
+          setBusinesses(getSampleBusinesses());
+        }
+      } catch (error) {
+        console.error('Error loading businesses:', error);
+        setBusinesses(getSampleBusinesses());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadBusinesses();
+  }, []);
+
+  // Sample businesses fallback
+  const getSampleBusinesses = () => [
+    {
+      id: 1,
+      name: 'Soul Food Kitchen',
+      type: 'Restaurant',
+      owner: 'Black-owned',
+      description: 'Authentic soul food restaurant serving the community for over 20 years.',
+      rating: '4.5 (127)',
+      address: '123 Main St, Buffalo, NY',
+      phone: '(716) 555-0123',
+      hours: 'Mon-Sat: 11AM-9PM',
+      email: 'info@soulfoodkitchen.com',
+      website: 'https://soulfoodkitchen.com',
+      image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=200&fit=crop',
+      verified: true,
+      dateAdded: '2025-01-01',
+      status: 'approved'
+    },
+    {
+      id: 2,
+      name: 'Tech Solutions Plus',
+      type: 'Technology',
+      owner: 'Asian-owned',
+      description: 'Full-service IT consulting and software development company.',
+      rating: '4.8 (89)',
+      address: '456 Tech Ave, Buffalo, NY',
+      phone: '(716) 555-0456',
+      hours: 'Mon-Fri: 9AM-6PM',
+      email: 'contact@techsolutionsplus.com',
+      website: 'https://techsolutionsplus.com',
+      image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=200&fit=crop',
+      verified: true,
+      dateAdded: '2025-01-02',
+      status: 'approved'
+    },
+    {
+      id: 3,
+      name: "Abuela's Market",
+      type: 'Grocery',
+      owner: 'Hispanic-owned',
+      description: 'Family-owned grocery store with authentic Hispanic foods.',
+      rating: '4.6 (203)',
+      address: '789 Market St, Rochester, NY',
+      phone: '(585) 555-0789',
+      hours: 'Daily: 8AM-10PM',
+      email: 'info@abuelasmarket.com',
+      website: 'https://abuelasmarket.com',
+      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop',
+      verified: true,
+      dateAdded: '2025-01-03',
+      status: 'approved'
+    }
+  ];
+
+  // Admin authentication
+  const handleAdminLogin = (e) => {
+    e.preventDefault();
+    if (adminPassword === ADMIN_PASSWORD) {
+      setIsAdminAuthenticated(true);
+      setAdminPassword('');
+    } else {
+      alert('Incorrect password');
+    }
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdminAuthenticated(false);
+    setEditingBusiness(null);
+    setShowAddForm(false);
+  };
+
+  // Business management functions
+  const handleAddBusiness = (businessData) => {
+    const newBusiness = {
+      ...businessData,
+      id: Math.max(...businesses.map(b => b.id), 0) + 1,
+      dateAdded: new Date().toISOString().split('T')[0],
+      status: 'approved',
+      verified: true
+    };
+    
+    const updatedBusinesses = [...businesses, newBusiness];
+    setBusinesses(updatedBusinesses);
+    
+    // In a real implementation, this would update the JSON file via GitHub API
+    alert('Business added successfully! Note: In production, this would update the businesses.json file and trigger a redeployment.');
+    setShowAddForm(false);
+  };
+
+  const handleEditBusiness = (businessData) => {
+    const updatedBusinesses = businesses.map(b => 
+      b.id === editingBusiness.id ? { ...businessData, id: editingBusiness.id } : b
+    );
+    setBusinesses(updatedBusinesses);
+    
+    alert('Business updated successfully! Note: In production, this would update the businesses.json file and trigger a redeployment.');
+    setEditingBusiness(null);
+  };
+
+  const handleDeleteBusiness = (businessId) => {
+    if (window.confirm('Are you sure you want to delete this business?')) {
+      const updatedBusinesses = businesses.filter(b => b.id !== businessId);
+      setBusinesses(updatedBusinesses);
+      
+      alert('Business deleted successfully! Note: In production, this would update the businesses.json file and trigger a redeployment.');
+    }
+  };
 
   // Handle business form submission with EmailJS
   const handleBusinessSubmit = async (e) => {
@@ -90,52 +233,9 @@ function App() {
     }
   };
 
-  // Sample business data
-  const businesses = [
-    {
-      id: 1,
-      name: 'Soul Food Kitchen',
-      type: 'Restaurant',
-      owner: 'Black-owned',
-      description: 'Authentic soul food restaurant serving the community for over 20 years.',
-      rating: '4.5 (127)',
-      address: '123 Main St, Buffalo, NY',
-      phone: '(716) 555-0123',
-      hours: 'Mon-Sat: 11AM-9PM',
-      image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=200&fit=crop',
-      verified: true,
-    },
-    {
-      id: 2,
-      name: 'Tech Solutions Plus',
-      type: 'Technology',
-      owner: 'Asian-owned',
-      description: 'Full-service IT consulting and software development company.',
-      rating: '4.8 (89)',
-      address: '456 Tech Ave, Buffalo, NY',
-      phone: '(716) 555-0456',
-      hours: 'Mon-Fri: 9AM-6PM',
-      image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=200&fit=crop',
-      verified: true,
-    },
-    {
-      id: 3,
-      name: "Abuela's Market",
-      type: 'Grocery',
-      owner: 'Hispanic-owned',
-      description: 'Family-owned grocery store with authentic Hispanic foods.',
-      rating: '4.6 (203)',
-      address: '789 Market St, Rochester, NY',
-      phone: '(585) 555-0789',
-      hours: 'Daily: 8AM-10PM',
-      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop',
-      verified: true,
-    },
-  ];
-
   const filteredBusinesses = businesses.filter(business => {
     const matchesCategory = selectedCategory === 'All' || business.type === selectedCategory;
-    return matchesCategory;
+    return matchesCategory && business.status === 'approved';
   });
 
   const favoriteBusinesses = businesses.filter(business => favorites.includes(business.id));
@@ -404,6 +504,82 @@ function App() {
       cursor: isSubmitting ? 'not-allowed' : 'pointer',
       opacity: isSubmitting ? 0.7 : 1,
     },
+    adminContainer: {
+      background: 'white',
+      borderRadius: '12px',
+      padding: '24px',
+      margin: '20px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    },
+    adminHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '24px',
+      borderBottom: '2px solid #e5e7eb',
+      paddingBottom: '16px',
+    },
+    adminTitle: {
+      fontSize: '24px',
+      fontWeight: 'bold',
+      color: '#1f2937',
+    },
+    logoutButton: {
+      background: '#ef4444',
+      color: 'white',
+      padding: '8px 16px',
+      fontSize: '14px',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+    },
+    adminActions: {
+      display: 'flex',
+      gap: '12px',
+      marginBottom: '24px',
+      flexWrap: 'wrap',
+    },
+    adminButton: {
+      background: '#3b82f6',
+      color: 'white',
+      padding: '10px 20px',
+      fontSize: '14px',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+    },
+    businessRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '12px',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      marginBottom: '8px',
+      background: '#f9fafb',
+    },
+    businessActions: {
+      display: 'flex',
+      gap: '8px',
+    },
+    editButton: {
+      background: '#f59e0b',
+      color: 'white',
+      padding: '6px 12px',
+      fontSize: '12px',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer',
+    },
+    deleteButton: {
+      background: '#ef4444',
+      color: 'white',
+      padding: '6px 12px',
+      fontSize: '12px',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer',
+    },
   };
 
   // PWA install prompt handling
@@ -417,6 +593,297 @@ function App() {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
+  }, []);
+
+  // Admin Login Form
+  const renderAdminLogin = () => (
+    <div style={styles.container}>
+      <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
+      
+      <div style={styles.formContainer}>
+        <h1 style={styles.formTitle}>Admin Login</h1>
+        <form onSubmit={handleAdminLogin}>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Password</label>
+            <input
+              style={styles.input}
+              type="password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              placeholder="Enter admin password"
+              required
+            />
+          </div>
+          <button style={{...styles.button, ...styles.primaryButton}} type="submit">
+            Login
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+
+  // Business Form Component (for add/edit)
+  const BusinessForm = ({ business, onSubmit, onCancel, title }) => {
+    const [formData, setFormData] = useState(business || {
+      name: '',
+      type: '',
+      owner: '',
+      description: '',
+      address: '',
+      phone: '',
+      email: '',
+      website: '',
+      hours: '',
+      image: '',
+      rating: '0.0 (0)'
+    });
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      onSubmit(formData);
+    };
+
+    const handleChange = (field, value) => {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    return (
+      <div style={styles.formContainer}>
+        <h2 style={styles.formTitle}>{title}</h2>
+        <form onSubmit={handleSubmit}>
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Business Name *</label>
+            <input
+              style={styles.input}
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Category *</label>
+            <select
+              style={styles.select}
+              value={formData.type}
+              onChange={(e) => handleChange('type', e.target.value)}
+              required
+            >
+              <option value="">Select category</option>
+              <option value="Restaurant">Restaurant</option>
+              <option value="Technology">Technology</option>
+              <option value="Beauty">Beauty & Personal Care</option>
+              <option value="Grocery">Grocery & Food</option>
+              <option value="Coffee">Coffee & Beverages</option>
+              <option value="Health">Health & Wellness</option>
+              <option value="Retail">Retail & Shopping</option>
+              <option value="Services">Professional Services</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Owner Ethnicity *</label>
+            <select
+              style={styles.select}
+              value={formData.owner}
+              onChange={(e) => handleChange('owner', e.target.value)}
+              required
+            >
+              <option value="">Select owner ethnicity</option>
+              <option value="Black-owned">Black-owned</option>
+              <option value="Hispanic-owned">Hispanic-owned</option>
+              <option value="Asian-owned">Asian-owned</option>
+              <option value="Native American-owned">Native American-owned</option>
+              <option value="Latino-owned">Latino-owned</option>
+              <option value="Other minority-owned">Other minority-owned</option>
+            </select>
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Description *</label>
+            <textarea
+              style={styles.textarea}
+              value={formData.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Address *</label>
+            <input
+              style={styles.input}
+              type="text"
+              value={formData.address}
+              onChange={(e) => handleChange('address', e.target.value)}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Phone *</label>
+            <input
+              style={styles.input}
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => handleChange('phone', e.target.value)}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Email *</label>
+            <input
+              style={styles.input}
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Website</label>
+            <input
+              style={styles.input}
+              type="url"
+              value={formData.website}
+              onChange={(e) => handleChange('website', e.target.value)}
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Hours</label>
+            <textarea
+              style={styles.textarea}
+              value={formData.hours}
+              onChange={(e) => handleChange('hours', e.target.value)}
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Image URL</label>
+            <input
+              style={styles.input}
+              type="url"
+              value={formData.image}
+              onChange={(e) => handleChange('image', e.target.value)}
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Rating</label>
+            <input
+              style={styles.input}
+              type="text"
+              value={formData.rating}
+              onChange={(e) => handleChange('rating', e.target.value)}
+              placeholder="4.5 (123)"
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button style={{...styles.button, ...styles.primaryButton, flex: 1}} type="submit">
+              {business ? 'Update Business' : 'Add Business'}
+            </button>
+            <button
+              style={{...styles.button, ...styles.secondaryButton, flex: 1}}
+              type="button"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  };
+
+  // Admin Panel
+  const renderAdminPanel = () => (
+    <div style={styles.container}>
+      <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
+      
+      <div style={styles.adminContainer}>
+        <div style={styles.adminHeader}>
+          <h1 style={styles.adminTitle}>Business Management</h1>
+          <button style={styles.logoutButton} onClick={handleAdminLogout}>
+            Logout
+          </button>
+        </div>
+
+        {!showAddForm && !editingBusiness && (
+          <>
+            <div style={styles.adminActions}>
+              <button
+                style={styles.adminButton}
+                onClick={() => setShowAddForm(true)}
+              >
+                ➕ Add New Business
+              </button>
+              <div style={{ fontSize: '14px', color: '#6b7280', alignSelf: 'center' }}>
+                Total Businesses: {businesses.length}
+              </div>
+            </div>
+
+            <div>
+              <h3 style={{ marginBottom: '16px', color: '#1f2937' }}>Current Businesses</h3>
+              {businesses.map(business => (
+                <div key={business.id} style={styles.businessRow}>
+                  <div>
+                    <div style={{ fontWeight: 'bold', color: '#1f2937' }}>{business.name}</div>
+                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                      {business.type} • {business.owner} • {business.address}
+                    </div>
+                  </div>
+                  <div style={styles.businessActions}>
+                    <button
+                      style={styles.editButton}
+                      onClick={() => setEditingBusiness(business)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      style={styles.deleteButton}
+                      onClick={() => handleDeleteBusiness(business.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {showAddForm && (
+          <BusinessForm
+            title="Add New Business"
+            onSubmit={handleAddBusiness}
+            onCancel={() => setShowAddForm(false)}
+          />
+        )}
+
+        {editingBusiness && (
+          <BusinessForm
+            business={editingBusiness}
+            title="Edit Business"
+            onSubmit={handleEditBusiness}
+            onCancel={() => setEditingBusiness(null)}
+          />
+        )}
+      </div>
+    </div>
+  );
+
+  // Check for admin access via URL
+  useEffect(() => {
+    if (window.location.pathname === '/admin' || window.location.hash === '#admin') {
+      setCurrentView('admin');
+    }
   }, []);
 
   // Landing Page
@@ -512,62 +979,68 @@ function App() {
           {filteredBusinesses.length} businesses found
         </p>
         
-        {filteredBusinesses.map((business) => (
-          <div key={business.id} style={styles.businessCard}>
-            <div style={{ position: 'relative' }}>
-              <img src={business.image} alt={business.name} style={styles.businessImage} />
-              <button 
-                style={{
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ fontSize: '18px', color: '#6b7280' }}>Loading businesses...</div>
+          </div>
+        ) : (
+          filteredBusinesses.map((business) => (
+            <div key={business.id} style={styles.businessCard}>
+              <div style={{ position: 'relative' }}>
+                <img src={business.image} alt={business.name} style={styles.businessImage} />
+                <button 
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    background: 'white',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '36px',
+                    height: '36px',
+                    fontSize: '18px',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    color: favorites.includes(business.id) ? '#ef4444' : '#d1d5db',
+                  }}
+                  onClick={() => toggleFavorite(business.id)}
+                >
+                  ♥
+                </button>
+                <div style={{
                   position: 'absolute',
                   top: '12px',
-                  right: '12px',
-                  background: 'white',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '36px',
-                  height: '36px',
-                  fontSize: '18px',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  color: favorites.includes(business.id) ? '#ef4444' : '#d1d5db',
-                }}
-                onClick={() => toggleFavorite(business.id)}
-              >
-                ♥
-              </button>
-              <div style={{
-                position: 'absolute',
-                top: '12px',
-                left: '12px',
-                background: '#fbbf24',
-                color: 'white',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: 'bold',
-              }}>
-                {business.type}
+                  left: '12px',
+                  background: '#fbbf24',
+                  color: 'white',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                }}>
+                  {business.type}
+                </div>
+              </div>
+              
+              <h3 style={styles.businessName}>{business.name}</h3>
+              <div style={styles.businessType}>{business.owner}</div>
+              <p style={styles.businessDescription}>{business.description}</p>
+              
+              <div style={styles.rating}>
+                ⭐⭐⭐⭐⭐ {business.rating} {business.verified && '✓ Verified'}
+              </div>
+              
+              <div style={styles.businessInfo}>📍 {business.address}</div>
+              <div style={styles.businessInfo}>📞 {business.phone}</div>
+              <div style={styles.businessInfo}>🕒 {business.hours}</div>
+              
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                <button style={{...styles.button, ...styles.primaryButton, flex: 1}}>View Details</button>
+                <button style={{...styles.button, ...styles.secondaryButton, flex: 1}}>Contact</button>
               </div>
             </div>
-            
-            <h3 style={styles.businessName}>{business.name}</h3>
-            <div style={styles.businessType}>{business.owner}</div>
-            <p style={styles.businessDescription}>{business.description}</p>
-            
-            <div style={styles.rating}>
-              ⭐⭐⭐⭐⭐ {business.rating} {business.verified && '✓ Verified'}
-            </div>
-            
-            <div style={styles.businessInfo}>📍 {business.address}</div>
-            <div style={styles.businessInfo}>📞 {business.phone}</div>
-            <div style={styles.businessInfo}>🕒 {business.hours}</div>
-            
-            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-              <button style={{...styles.button, ...styles.primaryButton, flex: 1}}>View Details</button>
-              <button style={{...styles.button, ...styles.secondaryButton, flex: 1}}>Contact</button>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
@@ -792,6 +1265,7 @@ function App() {
       case 'favorites': return renderFavorites();
       case 'profile': return renderProfile();
       case 'addBusiness': return renderAddBusiness();
+      case 'admin': return isAdminAuthenticated ? renderAdminPanel() : renderAdminLogin();
       default: return renderLandingPage();
     }
   };
@@ -801,24 +1275,26 @@ function App() {
       {renderCurrentView()}
       
       {/* Bottom Navigation */}
-      <div style={styles.bottomNav}>
-        <button style={{...styles.navButton, ...(currentView === 'landing' ? styles.activeNavButton : {})}} onClick={() => navigateToView('landing')}>
-          <div style={{ fontSize: '18px', marginBottom: '2px' }}>🏠</div>
-          <div>Home</div>
-        </button>
-        <button style={{...styles.navButton, ...(currentView === 'businesses' ? styles.activeNavButton : {})}} onClick={() => navigateToView('businesses')}>
-          <div style={{ fontSize: '18px', marginBottom: '2px' }}>🔍</div>
-          <div>Search</div>
-        </button>
-        <button style={{...styles.navButton, ...(currentView === 'favorites' ? styles.activeNavButton : {})}} onClick={() => navigateToView('favorites')}>
-          <div style={{ fontSize: '18px', marginBottom: '2px' }}>💝</div>
-          <div>Favorites</div>
-        </button>
-        <button style={{...styles.navButton, ...(currentView === 'profile' ? styles.activeNavButton : {})}} onClick={() => navigateToView('profile')}>
-          <div style={{ fontSize: '18px', marginBottom: '2px' }}>👤</div>
-          <div>Profile</div>
-        </button>
-      </div>
+      {currentView !== 'admin' && (
+        <div style={styles.bottomNav}>
+          <button style={{...styles.navButton, ...(currentView === 'landing' ? styles.activeNavButton : {})}} onClick={() => navigateToView('landing')}>
+            <div style={{ fontSize: '18px', marginBottom: '2px' }}>🏠</div>
+            <div>Home</div>
+          </button>
+          <button style={{...styles.navButton, ...(currentView === 'businesses' ? styles.activeNavButton : {})}} onClick={() => navigateToView('businesses')}>
+            <div style={{ fontSize: '18px', marginBottom: '2px' }}>🔍</div>
+            <div>Search</div>
+          </button>
+          <button style={{...styles.navButton, ...(currentView === 'favorites' ? styles.activeNavButton : {})}} onClick={() => navigateToView('favorites')}>
+            <div style={{ fontSize: '18px', marginBottom: '2px' }}>💝</div>
+            <div>Favorites</div>
+          </button>
+          <button style={{...styles.navButton, ...(currentView === 'profile' ? styles.activeNavButton : {})}} onClick={() => navigateToView('profile')}>
+            <div style={{ fontSize: '18px', marginBottom: '2px' }}>👤</div>
+            <div>Profile</div>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
