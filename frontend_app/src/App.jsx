@@ -672,6 +672,7 @@ function App() {
             >
               <option value="">Select category</option>
               <option value="Restaurant">Restaurant</option>
+              <option value="Entertainment">Entertainment</option>
               <option value="Technology">Technology</option>
               <option value="Beauty">Beauty & Personal Care</option>
               <option value="Grocery">Grocery & Food</option>
@@ -1067,6 +1068,7 @@ function App() {
             <select style={styles.select} name="businessCategory" required>
               <option value="">Select a category</option>
               <option value="restaurant">Restaurant</option>
+              <option value="entertainmemt">Entertainment</option>
               <option value="technology">Technology</option>
               <option value="beauty">Beauty & Personal Care</option>
               <option value="grocery">Grocery & Food</option>
