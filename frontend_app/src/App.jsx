@@ -28,6 +28,76 @@ function App() {
     PUBLIC_KEY: 'jv0z8LO2xSTdzuvDz'
   };
 
+  // All US States and Territories
+  const US_STATES = [
+    { value: '', label: 'Select State' },
+    { value: 'AL', label: 'Alabama' },
+    { value: 'AK', label: 'Alaska' },
+    { value: 'AZ', label: 'Arizona' },
+    { value: 'AR', label: 'Arkansas' },
+    { value: 'CA', label: 'California' },
+    { value: 'CO', label: 'Colorado' },
+    { value: 'CT', label: 'Connecticut' },
+    { value: 'DE', label: 'Delaware' },
+    { value: 'DC', label: 'District of Columbia' },
+    { value: 'FL', label: 'Florida' },
+    { value: 'GA', label: 'Georgia' },
+    { value: 'HI', label: 'Hawaii' },
+    { value: 'ID', label: 'Idaho' },
+    { value: 'IL', label: 'Illinois' },
+    { value: 'IN', label: 'Indiana' },
+    { value: 'IA', label: 'Iowa' },
+    { value: 'KS', label: 'Kansas' },
+    { value: 'KY', label: 'Kentucky' },
+    { value: 'LA', label: 'Louisiana' },
+    { value: 'ME', label: 'Maine' },
+    { value: 'MD', label: 'Maryland' },
+    { value: 'MA', label: 'Massachusetts' },
+    { value: 'MI', label: 'Michigan' },
+    { value: 'MN', label: 'Minnesota' },
+    { value: 'MS', label: 'Mississippi' },
+    { value: 'MO', label: 'Missouri' },
+    { value: 'MT', label: 'Montana' },
+    { value: 'NE', label: 'Nebraska' },
+    { value: 'NV', label: 'Nevada' },
+    { value: 'NH', label: 'New Hampshire' },
+    { value: 'NJ', label: 'New Jersey' },
+    { value: 'NM', label: 'New Mexico' },
+    { value: 'NY', label: 'New York' },
+    { value: 'NC', label: 'North Carolina' },
+    { value: 'ND', label: 'North Dakota' },
+    { value: 'OH', label: 'Ohio' },
+    { value: 'OK', label: 'Oklahoma' },
+    { value: 'OR', label: 'Oregon' },
+    { value: 'PA', label: 'Pennsylvania' },
+    { value: 'RI', label: 'Rhode Island' },
+    { value: 'SC', label: 'South Carolina' },
+    { value: 'SD', label: 'South Dakota' },
+    { value: 'TN', label: 'Tennessee' },
+    { value: 'TX', label: 'Texas' },
+    { value: 'UT', label: 'Utah' },
+    { value: 'VT', label: 'Vermont' },
+    { value: 'VA', label: 'Virginia' },
+    { value: 'WA', label: 'Washington' },
+    { value: 'WV', label: 'West Virginia' },
+    { value: 'WI', label: 'Wisconsin' },
+    { value: 'WY', label: 'Wyoming' },
+    { value: 'ONLINE', label: 'Online/National' }
+  ];
+
+  // Google Maps integration
+  const createGoogleMapsUrl = (address, businessName) => {
+    const query = encodeURIComponent(`${businessName}, ${address}`);
+    return `https://www.google.com/maps/search/?api=1&query=${query}`;
+  };
+
+  const handleAddressClick = (business) => {
+    if (business.businessType === 'physical') {
+      const mapsUrl = createGoogleMapsUrl(business.address, business.name);
+      window.open(mapsUrl, '_blank');
+    }
+  };
+
   // Initialize EmailJS
   useEffect(() => {
     emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
@@ -271,6 +341,33 @@ function App() {
 
   const favoriteBusinesses = businesses.filter(business => favorites.includes(business.id));
 
+  // Address component with Google Maps integration
+  const AddressDisplay = ({ business }) => {
+    if (business.businessType === 'online') {
+      return (
+        <div style={styles.businessInfo}>
+          🌐 Online Business • Serves: {business.serviceArea || business.city}
+        </div>
+      );
+    } else if (business.businessType === 'mobile') {
+      return (
+        <div style={styles.businessInfo}>
+          🚐 Mobile Service • Serves: {business.serviceArea || business.city}
+        </div>
+      );
+    } else {
+      return (
+        <div 
+          style={styles.addressLink}
+          onClick={() => handleAddressClick(business)}
+          title="Click for directions"
+        >
+          📍 {business.address} (Get Directions)
+        </div>
+      );
+    }
+  };
+
   // Styles
   const styles = {
     container: {
@@ -469,6 +566,14 @@ function App() {
       fontSize: '14px',
       color: '#374151',
       marginBottom: '4px',
+    },
+    addressLink: {
+      fontSize: '14px',
+      color: '#ea580c',
+      marginBottom: '4px',
+      cursor: 'pointer',
+      textDecoration: 'underline',
+      transition: 'color 0.2s',
     },
     rating: {
       color: '#fbbf24',
@@ -866,18 +971,11 @@ function App() {
                 onChange={(e) => handleChange('state', e.target.value)}
                 required
               >
-                <option value="">State</option>
-                <option value="NY">NY</option>
-                <option value="CA">CA</option>
-                <option value="TX">TX</option>
-                <option value="FL">FL</option>
-                <option value="IL">IL</option>
-                <option value="PA">PA</option>
-                <option value="OH">OH</option>
-                <option value="GA">GA</option>
-                <option value="NC">NC</option>
-                <option value="MI">MI</option>
-                {formData.businessType === 'online' && <option value="ONLINE">Online/National</option>}
+                {US_STATES.map(state => (
+                  <option key={state.value} value={state.value}>
+                    {state.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -1287,15 +1385,7 @@ function App() {
               )}
             </div>
             
-            <div style={styles.businessInfo}>
-              {business.businessType === 'online' ? (
-                <>🌐 Online Business • Serves: {business.serviceArea || business.city}</>
-              ) : business.businessType === 'mobile' ? (
-                <>🚐 Mobile Service • Serves: {business.serviceArea || business.city}</>
-              ) : (
-                <>📍 {business.address}</>
-              )}
-            </div>
+            <AddressDisplay business={business} />
             
             {business.serviceArea && business.businessType !== 'online' && business.businessType !== 'mobile' && (
               <div style={styles.businessInfo}>🗺️ Service Area: {business.serviceArea}</div>
@@ -1453,18 +1543,11 @@ function App() {
               <div style={{...styles.formGroup, flex: 1}}>
                 <label style={styles.label}>State *</label>
                 <select style={styles.select} name="businessState" required>
-                  <option value="">State</option>
-                  <option value="NY">NY</option>
-                  <option value="CA">CA</option>
-                  <option value="TX">TX</option>
-                  <option value="FL">FL</option>
-                  <option value="IL">IL</option>
-                  <option value="PA">PA</option>
-                  <option value="OH">OH</option>
-                  <option value="GA">GA</option>
-                  <option value="NC">NC</option>
-                  <option value="MI">MI</option>
-                  {businessLocationType === 'online' && <option value="ONLINE">Online/National</option>}
+                  {US_STATES.map(state => (
+                    <option key={state.value} value={state.value}>
+                      {state.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -1625,15 +1708,7 @@ function App() {
                 )}
               </div>
               
-              <div style={styles.businessInfo}>
-                {business.businessType === 'online' ? (
-                  <>🌐 Online Business • Serves: {business.serviceArea || business.city}</>
-                ) : business.businessType === 'mobile' ? (
-                  <>🚐 Mobile Service • Serves: {business.serviceArea || business.city}</>
-                ) : (
-                  <>📍 {business.address}</>
-                )}
-              </div>
+              <AddressDisplay business={business} />
               
               <div style={styles.businessInfo}>📞 {business.phone}</div>
               {business.hours && <div style={styles.businessInfo}>🕒 {business.hours}</div>}
