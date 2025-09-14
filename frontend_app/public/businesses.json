@@ -14,7 +14,10 @@
     "image": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=200&fit=crop",
     "verified": true,
     "dateAdded": "2025-01-01",
-    "status": "approved"
+    "status": "approved",
+    "verificationSubmitted": true,
+    "verificationMethod": "business-license",
+    "verificationDetails": "BL-2024-001234"
   },
   {
     "id": 2,
@@ -31,7 +34,10 @@
     "image": "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=200&fit=crop",
     "verified": true,
     "dateAdded": "2025-01-02",
-    "status": "approved"
+    "status": "approved",
+    "verificationSubmitted": true,
+    "verificationMethod": "ein",
+    "verificationDetails": "EIN-12-3456789"
   },
   {
     "id": 3,
@@ -48,7 +54,50 @@
     "image": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop",
     "verified": true,
     "dateAdded": "2025-01-03",
-    "status": "approved"
+    "status": "approved",
+    "verificationSubmitted": false,
+    "verificationMethod": "",
+    "verificationDetails": ""
+  },
+  {
+    "id": 4,
+    "name": "Bella's Beauty Salon",
+    "type": "Beauty",
+    "owner": "Black-owned",
+    "description": "Full-service beauty salon specializing in natural hair care and styling.",
+    "rating": "4.7 (156)",
+    "address": "321 Beauty Blvd, Buffalo, NY",
+    "phone": "(716) 555-0321",
+    "hours": "Tue-Sat: 9AM-7PM",
+    "email": "info@bellasbeauty.com",
+    "website": "https://bellasbeauty.com",
+    "image": "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=200&fit=crop",
+    "verified": true,
+    "dateAdded": "2025-01-04",
+    "status": "approved",
+    "verificationSubmitted": true,
+    "verificationMethod": "dba",
+    "verificationDetails": "DBA-2024-BB001"
+  },
+  {
+    "id": 5,
+    "name": "Buffalo Comedy Club",
+    "type": "Entertainment",
+    "owner": "Hispanic-owned",
+    "description": "Live comedy shows and entertainment venue featuring local and touring comedians.",
+    "rating": "4.4 (92)",
+    "address": "567 Laugh Lane, Buffalo, NY",
+    "phone": "(716) 555-JOKE",
+    "hours": "Wed-Sat: 7PM-11PM",
+    "email": "info@buffalocomedy.com",
+    "website": "https://buffalocomedy.com",
+    "image": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=200&fit=crop",
+    "verified": true,
+    "dateAdded": "2025-01-05",
+    "status": "approved",
+    "verificationSubmitted": false,
+    "verificationMethod": "",
+    "verificationDetails": ""
   }
 ]
 
