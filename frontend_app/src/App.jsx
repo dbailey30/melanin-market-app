@@ -15,6 +15,7 @@ function App() {
   const [adminPassword, setAdminPassword] = useState('');
   const [editingBusiness, setEditingBusiness] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [logoClickCount, setLogoClickCount] = useState(0);
 
   // Admin password - Change this to something secure
   const ADMIN_PASSWORD = 'melanin2025admin';
@@ -29,6 +30,13 @@ function App() {
   // Initialize EmailJS
   useEffect(() => {
     emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+  }, []);
+
+  // Check for admin access via URL hash
+  useEffect(() => {
+    if (window.location.hash === '#admin') {
+      setCurrentView('admin');
+    }
   }, []);
 
   // Load businesses from JSON file
@@ -54,7 +62,20 @@ function App() {
     loadBusinesses();
   }, []);
 
-  // Sample businesses fallback
+  // Handle logo clicks for admin access
+  const handleLogoClick = () => {
+    setLogoClickCount(prev => prev + 1);
+    if (logoClickCount >= 4) { // 5 clicks total to access admin
+      setCurrentView('admin');
+      setLogoClickCount(0);
+    }
+    // Reset counter after 3 seconds if not completed
+    setTimeout(() => {
+      setLogoClickCount(0);
+    }, 3000);
+  };
+
+  // Sample businesses fallback with verification data
   const getSampleBusinesses = () => [
     {
       id: 1,
@@ -71,7 +92,10 @@ function App() {
       image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=200&fit=crop',
       verified: true,
       dateAdded: '2025-01-01',
-      status: 'approved'
+      status: 'approved',
+      verificationSubmitted: true,
+      verificationMethod: 'business-license',
+      verificationDetails: 'BL-2024-001234'
     },
     {
       id: 2,
@@ -88,7 +112,10 @@ function App() {
       image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=200&fit=crop',
       verified: true,
       dateAdded: '2025-01-02',
-      status: 'approved'
+      status: 'approved',
+      verificationSubmitted: true,
+      verificationMethod: 'ein',
+      verificationDetails: 'EIN-12-3456789'
     },
     {
       id: 3,
@@ -105,7 +132,10 @@ function App() {
       image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop',
       verified: true,
       dateAdded: '2025-01-03',
-      status: 'approved'
+      status: 'approved',
+      verificationSubmitted: false,
+      verificationMethod: '',
+      verificationDetails: ''
     }
   ];
 
@@ -170,6 +200,9 @@ function App() {
 
     try {
       const formData = new FormData(e.target);
+      const verificationMethod = formData.get('verificationMethod');
+      const verificationDetails = formData.get('verificationDetails');
+      
       const businessData = {
         business_name: formData.get('businessName'),
         business_category: formData.get('businessCategory'),
@@ -182,8 +215,9 @@ function App() {
         business_email: formData.get('businessEmail'),
         business_website: formData.get('businessWebsite') || 'Not provided',
         business_hours: formData.get('businessHours') || 'Not provided',
-        verification_method: formData.get('verificationMethod') || 'Not provided',
-        verification_details: formData.get('verificationDetails') || 'Not provided',
+        verification_method: verificationMethod || 'Not provided',
+        verification_details: verificationDetails || 'Not provided',
+        verification_submitted: !!(verificationMethod && verificationDetails),
         submission_date: new Date().toLocaleDateString(),
         submission_time: new Date().toLocaleTimeString(),
         to_email: 'admin@melanin-market.com'
@@ -197,7 +231,12 @@ function App() {
       );
 
       console.log('Email sent successfully:', result);
-      alert('🎉 Success! Your business submission has been sent for review.\n\nWe will contact you at ' + businessData.business_email + ' within 2-3 business days.\n\nThank you for joining the Melanin Market community!');
+      
+      const verificationMessage = businessData.verification_submitted 
+        ? '\n\n🏆 Your business will receive a verified badge once approved!'
+        : '';
+      
+      alert('🎉 Success! Your business submission has been sent for review.\n\nWe will contact you at ' + businessData.business_email + ' within 2-3 business days.' + verificationMessage + '\n\nThank you for joining the Melanin Market community!');
       e.target.reset();
       setCurrentView('profile');
 
@@ -254,6 +293,7 @@ function App() {
       justifyContent: 'center',
       padding: '20px',
       background: 'rgba(255, 255, 255, 0.1)',
+      position: 'relative',
     },
     logo: {
       width: '40px',
@@ -264,6 +304,7 @@ function App() {
       background: 'white',
       padding: '4px',
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      cursor: 'pointer',
     },
     title: {
       fontSize: '28px',
@@ -274,6 +315,19 @@ function App() {
       fontSize: '14px',
       color: '#6b7280',
       marginTop: '4px',
+    },
+    adminButton: {
+      position: 'absolute',
+      bottom: '10px',
+      right: '20px',
+      background: 'rgba(234, 88, 12, 0.1)',
+      border: '1px solid rgba(234, 88, 12, 0.3)',
+      color: '#ea580c',
+      padding: '6px 12px',
+      fontSize: '12px',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      opacity: 0.7,
     },
     content: {
       padding: '20px',
@@ -408,6 +462,24 @@ function App() {
     rating: {
       color: '#fbbf24',
       marginBottom: '12px',
+      display: 'flex',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: '8px',
+    },
+    verifiedBadge: {
+      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+      color: 'white',
+      padding: '6px 12px',
+      borderRadius: '20px',
+      fontSize: '12px',
+      fontWeight: 'bold',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
+      boxShadow: '0 3px 6px rgba(245, 158, 11, 0.4)',
+      border: '2px solid #f59e0b',
+      whiteSpace: 'nowrap',
     },
     backButton: {
       background: '#f3f4f6',
@@ -538,6 +610,7 @@ function App() {
       gap: '12px',
       marginBottom: '24px',
       flexWrap: 'wrap',
+      alignItems: 'center',
     },
     adminButton: {
       background: '#3b82f6',
@@ -635,7 +708,10 @@ function App() {
       website: '',
       hours: '',
       image: '',
-      rating: '0.0 (0)'
+      rating: '0.0 (0)',
+      verificationSubmitted: false,
+      verificationMethod: '',
+      verificationDetails: ''
     });
 
     const handleSubmit = (e) => {
@@ -672,7 +748,6 @@ function App() {
             >
               <option value="">Select category</option>
               <option value="Restaurant">Restaurant</option>
-              <option value="Entertainment">Entertainment</option>
               <option value="Technology">Technology</option>
               <option value="Beauty">Beauty & Personal Care</option>
               <option value="Grocery">Grocery & Food</option>
@@ -680,6 +755,7 @@ function App() {
               <option value="Health">Health & Wellness</option>
               <option value="Retail">Retail & Shopping</option>
               <option value="Services">Professional Services</option>
+              <option value="Entertainment">Entertainment</option>
               <option value="Other">Other</option>
             </select>
           </div>
@@ -786,6 +862,44 @@ function App() {
             />
           </div>
 
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Verification Status</label>
+            <select
+              style={styles.select}
+              value={formData.verificationSubmitted ? 'verified' : 'unverified'}
+              onChange={(e) => handleChange('verificationSubmitted', e.target.value === 'verified')}
+            >
+              <option value="unverified">Not Verified</option>
+              <option value="verified">Verified Business</option>
+            </select>
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Verification Method</label>
+            <select
+              style={styles.select}
+              value={formData.verificationMethod || ''}
+              onChange={(e) => handleChange('verificationMethod', e.target.value)}
+            >
+              <option value="">Select verification method</option>
+              <option value="business-license">Business License</option>
+              <option value="ein">EIN Number</option>
+              <option value="dba">DBA Certificate</option>
+              <option value="other">Other Documentation</option>
+            </select>
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Verification Details</label>
+            <input
+              style={styles.input}
+              type="text"
+              value={formData.verificationDetails || ''}
+              onChange={(e) => handleChange('verificationDetails', e.target.value)}
+              placeholder="License number, EIN, or other verification info"
+            />
+          </div>
+
           <div style={{ display: 'flex', gap: '12px' }}>
             <button style={{...styles.button, ...styles.primaryButton, flex: 1}} type="submit">
               {business ? 'Update Business' : 'Add Business'}
@@ -804,99 +918,133 @@ function App() {
   };
 
   // Admin Panel
-  const renderAdminPanel = () => (
-    <div style={styles.container}>
-      <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
-      
-      <div style={styles.adminContainer}>
-        <div style={styles.adminHeader}>
-          <h1 style={styles.adminTitle}>Business Management</h1>
-          <button style={styles.logoutButton} onClick={handleAdminLogout}>
-            Logout
-          </button>
-        </div>
+  const renderAdminPanel = () => {
+    const verifiedCount = businesses.filter(b => b.verificationSubmitted).length;
+    const unverifiedCount = businesses.length - verifiedCount;
 
-        {!showAddForm && !editingBusiness && (
-          <>
-            <div style={styles.adminActions}>
-              <button
-                style={styles.adminButton}
-                onClick={() => setShowAddForm(true)}
-              >
-                ➕ Add New Business
-              </button>
-              <div style={{ fontSize: '14px', color: '#6b7280', alignSelf: 'center' }}>
-                Total Businesses: {businesses.length}
+    return (
+      <div style={styles.container}>
+        <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
+        
+        <div style={styles.adminContainer}>
+          <div style={styles.adminHeader}>
+            <h1 style={styles.adminTitle}>Business Management</h1>
+            <button style={styles.logoutButton} onClick={handleAdminLogout}>
+              Logout
+            </button>
+          </div>
+
+          {!showAddForm && !editingBusiness && (
+            <>
+              <div style={styles.adminActions}>
+                <button
+                  style={styles.adminButton}
+                  onClick={() => setShowAddForm(true)}
+                >
+                  ➕ Add New Business
+                </button>
+                <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                  Total: {businesses.length} | 
+                  <span style={{ color: '#f59e0b', fontWeight: 'bold' }}> Verified: {verifiedCount}</span> | 
+                  Unverified: {unverifiedCount}
+                </div>
               </div>
-            </div>
 
-            <div>
-              <h3 style={{ marginBottom: '16px', color: '#1f2937' }}>Current Businesses</h3>
-              {businesses.map(business => (
-                <div key={business.id} style={styles.businessRow}>
-                  <div>
-                    <div style={{ fontWeight: 'bold', color: '#1f2937' }}>{business.name}</div>
-                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                      {business.type} • {business.owner} • {business.address}
+              <div>
+                <h3 style={{ marginBottom: '16px', color: '#1f2937' }}>Current Businesses</h3>
+                {businesses.map(business => (
+                  <div key={business.id} style={styles.businessRow}>
+                    <div>
+                      <div style={{ fontWeight: 'bold', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {business.name}
+                        {business.verificationSubmitted && (
+                          <span style={{
+                            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                            color: 'white',
+                            padding: '2px 6px',
+                            borderRadius: '10px',
+                            fontSize: '10px',
+                            fontWeight: 'bold',
+                          }}>
+                            🏆 VERIFIED
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                        {business.type} • {business.owner} • {business.address}
+                      </div>
+                      {business.verificationSubmitted && (
+                        <div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '2px' }}>
+                          Verification: {business.verificationMethod} - {business.verificationDetails}
+                        </div>
+                      )}
+                    </div>
+                    <div style={styles.businessActions}>
+                      <button
+                        style={styles.editButton}
+                        onClick={() => setEditingBusiness(business)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        style={styles.deleteButton}
+                        onClick={() => handleDeleteBusiness(business.id)}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
-                  <div style={styles.businessActions}>
-                    <button
-                      style={styles.editButton}
-                      onClick={() => setEditingBusiness(business)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      style={styles.deleteButton}
-                      onClick={() => handleDeleteBusiness(business.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+                ))}
+              </div>
+            </>
+          )}
 
-        {showAddForm && (
-          <BusinessForm
-            title="Add New Business"
-            onSubmit={handleAddBusiness}
-            onCancel={() => setShowAddForm(false)}
-          />
-        )}
+          {showAddForm && (
+            <BusinessForm
+              title="Add New Business"
+              onSubmit={handleAddBusiness}
+              onCancel={() => setShowAddForm(false)}
+            />
+          )}
 
-        {editingBusiness && (
-          <BusinessForm
-            business={editingBusiness}
-            title="Edit Business"
-            onSubmit={handleEditBusiness}
-            onCancel={() => setEditingBusiness(null)}
-          />
-        )}
+          {editingBusiness && (
+            <BusinessForm
+              business={editingBusiness}
+              title="Edit Business"
+              onSubmit={handleEditBusiness}
+              onCancel={() => setEditingBusiness(null)}
+            />
+          )}
+        </div>
       </div>
-    </div>
-  );
-
-  // Check for admin access via URL
-  useEffect(() => {
-    if (window.location.pathname === '/admin' || window.location.hash === '#admin') {
-      setCurrentView('admin');
-    }
-  }, []);
+    );
+  };
 
   // Landing Page
   const renderLandingPage = () => (
     <div style={styles.container}>
       <div style={styles.header}>
-        <img src="/logo.PNG" alt="Melanin Market" style={styles.logo} onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block';}} />
-        <div style={{...styles.logo, display: 'none'}}>🛍️</div>
+        <img 
+          src="/logo.PNG" 
+          alt="Melanin Market" 
+          style={styles.logo} 
+          onClick={handleLogoClick}
+          onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block';}} 
+        />
+        <div style={{...styles.logo, display: 'none'}} onClick={handleLogoClick}>🛍️</div>
         <div>
           <div style={styles.title}>MELANIN MARKET</div>
           <div style={styles.subtitle}>Discover • Support • Thrive</div>
         </div>
+        
+        {/* Hidden Admin Button */}
+        <button 
+          style={styles.adminButton}
+          onClick={() => setCurrentView('admin')}
+          title="Admin Access"
+        >
+          Admin
+        </button>
       </div>
       
       <div style={styles.content}>
@@ -974,194 +1122,257 @@ function App() {
           <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Restaurant' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('Restaurant')}>Restaurant</button>
           <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Technology' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('Technology')}>Technology</button>
           <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Grocery' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('Grocery')}>Grocery</button>
+          <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Entertainment' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('Entertainment')}>Entertainment</button>
         </div>
         
         <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}>
           {filteredBusinesses.length} businesses found
         </p>
         
-        {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <div style={{ fontSize: '18px', color: '#6b7280' }}>Loading businesses...</div>
-          </div>
-        ) : (
-          filteredBusinesses.map((business) => (
-            <div key={business.id} style={styles.businessCard}>
-              <div style={{ position: 'relative' }}>
-                <img src={business.image} alt={business.name} style={styles.businessImage} />
-                <button 
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                    background: 'white',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '36px',
-                    height: '36px',
-                    fontSize: '18px',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    color: favorites.includes(business.id) ? '#ef4444' : '#d1d5db',
-                  }}
-                  onClick={() => toggleFavorite(business.id)}
-                >
-                  ♥
-                </button>
-                <div style={{
-                  position: 'absolute',
-                  top: '12px',
-                  left: '12px',
-                  background: '#fbbf24',
-                  color: 'white',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                }}>
-                  {business.type}
-                </div>
-              </div>
-              
-              <h3 style={styles.businessName}>{business.name}</h3>
-              <div style={styles.businessType}>{business.owner}</div>
-              <p style={styles.businessDescription}>{business.description}</p>
-              
-              <div style={styles.rating}>
-                ⭐⭐⭐⭐⭐ {business.rating} {business.verified && '✓ Verified'}
-              </div>
-              
-              <div style={styles.businessInfo}>📍 {business.address}</div>
-              <div style={styles.businessInfo}>📞 {business.phone}</div>
-              <div style={styles.businessInfo}>🕒 {business.hours}</div>
-              
-              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                <button style={{...styles.button, ...styles.primaryButton, flex: 1}}>View Details</button>
-                <button style={{...styles.button, ...styles.secondaryButton, flex: 1}}>Contact</button>
-              </div>
+        {filteredBusinesses.map(business => (
+          <div key={business.id} style={styles.businessCard}>
+            {business.image && (
+              <img 
+                src={business.image} 
+                alt={business.name}
+                style={styles.businessImage}
+                onError={(e) => {e.target.style.display='none';}}
+              />
+            )}
+            
+            <h3 style={styles.businessName}>{business.name}</h3>
+            <span style={styles.businessType}>{business.type}</span>
+            <p style={styles.businessDescription}>{business.description}</p>
+            
+            <div style={styles.rating}>
+              ⭐⭐⭐⭐⭐ {business.rating}
+              {business.verificationSubmitted && (
+                <span style={styles.verifiedBadge}>
+                  🏆 Verified Business
+                </span>
+              )}
             </div>
-          ))
-        )}
+            
+            <div style={styles.businessInfo}>📍 {business.address}</div>
+            <div style={styles.businessInfo}>📞 {business.phone}</div>
+            {business.hours && <div style={styles.businessInfo}>🕒 {business.hours}</div>}
+            {business.website && (
+              <div style={styles.businessInfo}>
+                🌐 <a href={business.website} target="_blank" rel="noopener noreferrer" style={{color: '#ea580c'}}>{business.website}</a>
+              </div>
+            )}
+            
+            <button 
+              style={{
+                ...styles.button,
+                background: favorites.includes(business.id) ? '#ef4444' : '#ea580c',
+                color: 'white',
+                width: '100%',
+                marginTop: '12px'
+              }}
+              onClick={() => toggleFavorite(business.id)}
+            >
+              {favorites.includes(business.id) ? '❤️ Remove from Favorites' : '🤍 Add to Favorites'}
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );
 
-  // Add Business Form with EmailJS Integration
-  const renderAddBusiness = () => (
+  // Profile/Add Business Page
+  const renderProfile = () => (
     <div style={styles.container}>
-      <button style={styles.backButton} onClick={() => navigateToView('profile')}>← Back</button>
+      <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
       
-      <div style={styles.formContainer}>
-        <h1 style={styles.formTitle}>Add Your Business</h1>
-        <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '24px' }}>
-          Get your minority-owned business featured on Melanin Market and connect with customers who want to support you.
-        </p>
-        
-        <form onSubmit={handleBusinessSubmit}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Business Name *</label>
-            <input style={styles.input} type="text" name="businessName" placeholder="Enter your business name" required />
-          </div>
-          
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Business Category *</label>
-            <select style={styles.select} name="businessCategory" required>
-              <option value="">Select a category</option>
-              <option value="restaurant">Restaurant</option>
-              <option value="entertainmemt">Entertainment</option>
-              <option value="technology">Technology</option>
-              <option value="beauty">Beauty & Personal Care</option>
-              <option value="grocery">Grocery & Food</option>
-              <option value="coffee">Coffee & Beverages</option>
-              <option value="health">Health & Wellness</option>
-              <option value="retail">Retail & Shopping</option>
-              <option value="services">Professional Services</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Owner Ethnicity *</label>
-            <select style={styles.select} name="ownerEthnicity" required>
-              <option value="">Select owner ethnicity</option>
-              <option value="black">Black-owned</option>
-              <option value="hispanic">Hispanic-owned</option>
-              <option value="asian">Asian-owned</option>
-              <option value="native">Native American-owned</option>
-              <option value="latino">Latino-owned</option>
-              <option value="other">Other minority-owned</option>
-            </select>
-          </div>
-          
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Business Description *</label>
-            <textarea style={styles.textarea} name="businessDescription" placeholder="Describe your business, what makes it special, and what you offer..." required></textarea>
-          </div>
-          
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Address *</label>
-            <input style={styles.input} type="text" name="businessAddress" placeholder="Street address" required />
-          </div>
-          
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <div style={{...styles.formGroup, flex: 1}}>
-              <label style={styles.label}>City *</label>
-              <input style={styles.input} type="text" name="businessCity" placeholder="City" required />
-            </div>
-            <div style={{...styles.formGroup, flex: 1}}>
-              <label style={styles.label}>State *</label>
-              <input style={styles.input} type="text" name="businessState" placeholder="State" required />
-            </div>
-          </div>
-          
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Phone Number *</label>
-            <input style={styles.input} type="tel" name="businessPhone" placeholder="(555) 123-4567" required />
-          </div>
-          
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Email *</label>
-            <input style={styles.input} type="email" name="businessEmail" placeholder="contact@yourbusiness.com" required />
-          </div>
-          
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Website</label>
-            <input style={styles.input} type="url" name="businessWebsite" placeholder="https://yourbusiness.com" />
-          </div>
-          
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Business Hours</label>
-            <textarea style={styles.textarea} name="businessHours" placeholder="Mon-Fri: 9AM-6PM, Sat: 10AM-4PM, Sun: Closed"></textarea>
-          </div>
-          
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Business Verification</label>
-            <select style={styles.select} name="verificationMethod">
-              <option value="">Select verification method</option>
-              <option value="business-license">Business License Number</option>
-              <option value="ein">Employer Identification Number (EIN)</option>
-              <option value="dba">DBA (Doing Business As) Certificate</option>
-              <option value="other">Other official documentation</option>
-            </select>
-          </div>
-          
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Verification Details</label>
-            <input style={styles.input} type="text" name="verificationDetails" placeholder="Enter license number, EIN, or other verification info" />
-          </div>
-          
-          <button 
-            style={{...styles.button, ...styles.submitButton}} 
-            type="submit" 
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? '📧 Sending Submission...' : '📤 Submit Business for Review'}
-          </button>
-          
-          <p style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center', marginTop: '16px' }}>
-            Your business will be reviewed within 2-3 business days. We'll contact you at the provided email address with updates.
+      <div style={styles.content}>
+        <div style={styles.featureCard}>
+          <div style={styles.featureIcon}>📱</div>
+          <h3 style={styles.featureTitle}>Install Melanin Market</h3>
+          <p style={styles.featureDescription}>
+            Add this app to your home screen for quick access to minority-owned businesses in your area.
           </p>
-        </form>
+          <button style={{...styles.button, ...styles.primaryButton}} onClick={handleInstallApp}>
+            📲 Install App
+          </button>
+        </div>
+
+        <div style={styles.formContainer}>
+          <h1 style={styles.formTitle}>Add Your Business</h1>
+          <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '24px' }}>
+            Join our community of minority-owned businesses and reach more customers.
+          </p>
+          
+          <form onSubmit={handleBusinessSubmit}>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Business Name *</label>
+              <input
+                style={styles.input}
+                type="text"
+                name="businessName"
+                required
+                placeholder="Enter your business name"
+              />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Business Category *</label>
+              <select style={styles.select} name="businessCategory" required>
+                <option value="">Select a category</option>
+                <option value="restaurant">Restaurant</option>
+                <option value="technology">Technology</option>
+                <option value="beauty">Beauty & Personal Care</option>
+                <option value="grocery">Grocery & Food</option>
+                <option value="coffee">Coffee & Beverages</option>
+                <option value="health">Health & Wellness</option>
+                <option value="retail">Retail & Shopping</option>
+                <option value="services">Professional Services</option>
+                <option value="entertainment">Entertainment</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Owner Ethnicity *</label>
+              <select style={styles.select} name="ownerEthnicity" required>
+                <option value="">Select owner ethnicity</option>
+                <option value="black">Black-owned</option>
+                <option value="hispanic">Hispanic-owned</option>
+                <option value="asian">Asian-owned</option>
+                <option value="native-american">Native American-owned</option>
+                <option value="latino">Latino-owned</option>
+                <option value="other">Other minority-owned</option>
+              </select>
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Business Description *</label>
+              <textarea
+                style={styles.textarea}
+                name="businessDescription"
+                required
+                placeholder="Describe your business, products, or services"
+              />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Street Address *</label>
+              <input
+                style={styles.input}
+                type="text"
+                name="businessAddress"
+                required
+                placeholder="123 Main Street"
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{...styles.formGroup, flex: 1}}>
+                <label style={styles.label}>City *</label>
+                <input
+                  style={styles.input}
+                  type="text"
+                  name="businessCity"
+                  required
+                  placeholder="Buffalo"
+                />
+              </div>
+              <div style={{...styles.formGroup, flex: 1}}>
+                <label style={styles.label}>State *</label>
+                <select style={styles.select} name="businessState" required>
+                  <option value="">State</option>
+                  <option value="NY">NY</option>
+                  <option value="CA">CA</option>
+                  <option value="TX">TX</option>
+                  <option value="FL">FL</option>
+                  <option value="IL">IL</option>
+                  <option value="PA">PA</option>
+                  <option value="OH">OH</option>
+                  <option value="GA">GA</option>
+                  <option value="NC">NC</option>
+                  <option value="MI">MI</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Phone Number *</label>
+              <input
+                style={styles.input}
+                type="tel"
+                name="businessPhone"
+                required
+                placeholder="(716) 555-0123"
+              />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Email Address *</label>
+              <input
+                style={styles.input}
+                type="email"
+                name="businessEmail"
+                required
+                placeholder="info@yourbusiness.com"
+              />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Website (Optional)</label>
+              <input
+                style={styles.input}
+                type="url"
+                name="businessWebsite"
+                placeholder="https://www.yourbusiness.com"
+              />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Business Hours (Optional)</label>
+              <textarea
+                style={styles.textarea}
+                name="businessHours"
+                placeholder="Mon-Fri: 9AM-6PM, Sat: 10AM-4PM, Sun: Closed"
+              />
+            </div>
+
+            <div style={{ background: '#fef3c7', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
+              <h4 style={{ color: '#92400e', marginBottom: '8px', fontSize: '16px' }}>🏆 Business Verification (Optional)</h4>
+              <p style={{ color: '#92400e', fontSize: '14px', marginBottom: '12px' }}>
+                Provide verification details to receive a verified business badge and build customer trust.
+              </p>
+              
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Verification Method</label>
+                <select style={styles.select} name="verificationMethod">
+                  <option value="">Select verification method</option>
+                  <option value="business-license">Business License</option>
+                  <option value="ein">EIN Number</option>
+                  <option value="dba">DBA Certificate</option>
+                  <option value="other">Other Documentation</option>
+                </select>
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Verification Details</label>
+                <input
+                  style={styles.input}
+                  type="text"
+                  name="verificationDetails"
+                  placeholder="License number, EIN, or other verification info"
+                />
+              </div>
+            </div>
+
+            <button 
+              style={{...styles.button, ...styles.submitButton}} 
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? '📤 Submitting...' : '📤 Submit Business for Review'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -1172,50 +1383,65 @@ function App() {
       <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
       
       <div style={styles.content}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '40px' }}>My Favorites</h1>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>My Favorites</h1>
         
         {favoriteBusinesses.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>💝</div>
-            <h2 style={{ fontSize: '20px', color: '#1f2937', marginBottom: '8px' }}>No favorites yet</h2>
-            <p style={{ color: '#6b7280', marginBottom: '24px' }}>Start exploring businesses and add them to your favorites!</p>
-            <button style={{...styles.button, ...styles.primaryButton}} onClick={() => navigateToView('businesses')}>Discover Businesses</button>
+          <div style={styles.featureCard}>
+            <div style={styles.featureIcon}>🤍</div>
+            <h3 style={styles.featureTitle}>No Favorites Yet</h3>
+            <p style={styles.featureDescription}>
+              Start exploring businesses and add your favorites to see them here.
+            </p>
+            <button style={{...styles.button, ...styles.primaryButton}} onClick={() => navigateToView('businesses')}>
+              🔍 Find Businesses
+            </button>
           </div>
         ) : (
-          favoriteBusinesses.map((business) => (
+          favoriteBusinesses.map(business => (
             <div key={business.id} style={styles.businessCard}>
-              <div style={{ position: 'relative' }}>
-                <img src={business.image} alt={business.name} style={styles.businessImage} />
-                <button 
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                    background: 'white',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '36px',
-                    height: '36px',
-                    fontSize: '18px',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    color: '#ef4444',
-                  }}
-                  onClick={() => toggleFavorite(business.id)}
-                >
-                  ♥
-                </button>
-              </div>
+              {business.image && (
+                <img 
+                  src={business.image} 
+                  alt={business.name}
+                  style={styles.businessImage}
+                  onError={(e) => {e.target.style.display='none';}}
+                />
+              )}
               
               <h3 style={styles.businessName}>{business.name}</h3>
-              <div style={styles.businessType}>{business.owner}</div>
+              <span style={styles.businessType}>{business.type}</span>
               <p style={styles.businessDescription}>{business.description}</p>
               
-              <div style={styles.rating}>⭐⭐⭐⭐⭐ {business.rating} {business.verified && '✓ Verified'}</div>
+              <div style={styles.rating}>
+                ⭐⭐⭐⭐⭐ {business.rating}
+                {business.verificationSubmitted && (
+                  <span style={styles.verifiedBadge}>
+                    🏆 Verified Business
+                  </span>
+                )}
+              </div>
               
               <div style={styles.businessInfo}>📍 {business.address}</div>
               <div style={styles.businessInfo}>📞 {business.phone}</div>
-              <div style={styles.businessInfo}>🕒 {business.hours}</div>
+              {business.hours && <div style={styles.businessInfo}>🕒 {business.hours}</div>}
+              {business.website && (
+                <div style={styles.businessInfo}>
+                  🌐 <a href={business.website} target="_blank" rel="noopener noreferrer" style={{color: '#ea580c'}}>{business.website}</a>
+                </div>
+              )}
+              
+              <button 
+                style={{
+                  ...styles.button,
+                  background: '#ef4444',
+                  color: 'white',
+                  width: '100%',
+                  marginTop: '12px'
+                }}
+                onClick={() => toggleFavorite(business.id)}
+              >
+                ❤️ Remove from Favorites
+              </button>
             </div>
           ))
         )}
@@ -1223,81 +1449,60 @@ function App() {
     </div>
   );
 
-  // Profile Page
-  const renderProfile = () => (
-    <div style={styles.container}>
-      <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
-      
-      <div style={styles.content}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '40px' }}>Profile</h1>
-        
-        <div style={styles.featureCard}>
-          <div style={styles.featureIcon}>🏪</div>
-          <h3 style={styles.featureTitle}>Add Your Business</h3>
-          <p style={styles.featureDescription}>
-            Get your minority-owned business featured on Melanin Market and connect with customers who want to support you.
-          </p>
-          <button style={{...styles.button, ...styles.primaryButton, marginTop: '16px'}} onClick={() => navigateToView('addBusiness')}>Add Your Business</button>
-        </div>
-
-        <div style={styles.featureCard}>
-          <div style={styles.featureIcon}>📱</div>
-          <h3 style={styles.featureTitle}>Install App</h3>
-          <p style={styles.featureDescription}>
-            Install Melanin Market on your device for quick access to discover and support minority-owned businesses.
-          </p>
-          <button style={{...styles.button, ...styles.secondaryButton, marginTop: '16px'}} onClick={handleInstallApp}>Install App</button>
-        </div>
-
-        <div style={styles.featureCard}>
-          <div style={styles.featureIcon}>💝</div>
-          <h3 style={styles.featureTitle}>My Favorites</h3>
-          <p style={styles.featureDescription}>View and manage your favorite minority-owned businesses.</p>
-          <button style={{...styles.button, ...styles.secondaryButton, marginTop: '16px'}} onClick={() => navigateToView('favorites')}>View Favorites ({favorites.length})</button>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Main render function
+  // Main render logic
   const renderCurrentView = () => {
+    if (currentView === 'admin') {
+      return isAdminAuthenticated ? renderAdminPanel() : renderAdminLogin();
+    }
+
     switch (currentView) {
-      case 'landing': return renderLandingPage();
-      case 'businesses': return renderBusinessListings();
-      case 'favorites': return renderFavorites();
-      case 'profile': return renderProfile();
-      case 'addBusiness': return renderAddBusiness();
-      case 'admin': return isAdminAuthenticated ? renderAdminPanel() : renderAdminLogin();
-      default: return renderLandingPage();
+      case 'businesses':
+        return renderBusinessListings();
+      case 'favorites':
+        return renderFavorites();
+      case 'profile':
+        return renderProfile();
+      default:
+        return renderLandingPage();
     }
   };
 
   return (
-    <div>
+    <>
       {renderCurrentView()}
       
       {/* Bottom Navigation */}
-      {currentView !== 'admin' && (
-        <div style={styles.bottomNav}>
-          <button style={{...styles.navButton, ...(currentView === 'landing' ? styles.activeNavButton : {})}} onClick={() => navigateToView('landing')}>
-            <div style={{ fontSize: '18px', marginBottom: '2px' }}>🏠</div>
-            <div>Home</div>
-          </button>
-          <button style={{...styles.navButton, ...(currentView === 'businesses' ? styles.activeNavButton : {})}} onClick={() => navigateToView('businesses')}>
-            <div style={{ fontSize: '18px', marginBottom: '2px' }}>🔍</div>
-            <div>Search</div>
-          </button>
-          <button style={{...styles.navButton, ...(currentView === 'favorites' ? styles.activeNavButton : {})}} onClick={() => navigateToView('favorites')}>
-            <div style={{ fontSize: '18px', marginBottom: '2px' }}>💝</div>
-            <div>Favorites</div>
-          </button>
-          <button style={{...styles.navButton, ...(currentView === 'profile' ? styles.activeNavButton : {})}} onClick={() => navigateToView('profile')}>
-            <div style={{ fontSize: '18px', marginBottom: '2px' }}>👤</div>
-            <div>Profile</div>
-          </button>
-        </div>
-      )}
-    </div>
+      <div style={styles.bottomNav}>
+        <button 
+          style={{...styles.navButton, ...(currentView === 'landing' ? styles.activeNavButton : {})}}
+          onClick={() => navigateToView('landing')}
+        >
+          <div style={{fontSize: '20px', marginBottom: '4px'}}>🏠</div>
+          Home
+        </button>
+        <button 
+          style={{...styles.navButton, ...(currentView === 'businesses' ? styles.activeNavButton : {})}}
+          onClick={() => navigateToView('businesses')}
+        >
+          <div style={{fontSize: '20px', marginBottom: '4px'}}>🔍</div>
+          Search
+        </button>
+        <button 
+          style={{...styles.navButton, ...(currentView === 'favorites' ? styles.activeNavButton : {})}}
+          onClick={() => navigateToView('favorites')}
+        >
+          <div style={{fontSize: '20px', marginBottom: '4px'}}>❤️</div>
+          Favorites
+        </button>
+        <button 
+          style={{...styles.navButton, ...(currentView === 'profile' ? styles.activeNavButton : {})}}
+          onClick={() => navigateToView('profile')}
+        >
+          <div style={{fontSize: '20px', marginBottom: '4px'}}>👤</div>
+          Profile
+        </button>
+      </div>
+    </>
   );
 }
 
