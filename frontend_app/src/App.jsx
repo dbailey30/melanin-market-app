@@ -9,6 +9,7 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [businesses, setBusinesses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [businessLocationType, setBusinessLocationType] = useState('physical');
 
   // Admin state
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
@@ -75,16 +76,20 @@ function App() {
     }, 3000);
   };
 
-  // Sample businesses fallback with verification data
+  // Sample businesses fallback with online business support
   const getSampleBusinesses = () => [
     {
       id: 1,
       name: 'Soul Food Kitchen',
       type: 'Restaurant',
+      businessType: 'physical',
       owner: 'Black-owned',
       description: 'Authentic soul food restaurant serving the community for over 20 years.',
       rating: '4.5 (127)',
       address: '123 Main St, Buffalo, NY',
+      city: 'Buffalo',
+      state: 'NY',
+      serviceArea: 'Buffalo Metro Area',
       phone: '(716) 555-0123',
       hours: 'Mon-Sat: 11AM-9PM',
       email: 'info@soulfoodkitchen.com',
@@ -99,43 +104,27 @@ function App() {
     },
     {
       id: 2,
-      name: 'Tech Solutions Plus',
+      name: 'Digital Dreams Marketing',
       type: 'Technology',
-      owner: 'Asian-owned',
-      description: 'Full-service IT consulting and software development company.',
-      rating: '4.8 (89)',
-      address: '456 Tech Ave, Buffalo, NY',
-      phone: '(716) 555-0456',
-      hours: 'Mon-Fri: 9AM-6PM',
-      email: 'contact@techsolutionsplus.com',
-      website: 'https://techsolutionsplus.com',
-      image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=200&fit=crop',
+      businessType: 'online',
+      owner: 'Black-owned',
+      description: 'Full-service digital marketing agency specializing in social media management and web design.',
+      rating: '4.9 (67)',
+      address: 'Online Business',
+      city: 'Buffalo',
+      state: 'NY',
+      serviceArea: 'Nationwide',
+      phone: '(716) 555-DIGI',
+      hours: 'Mon-Fri: 9AM-6PM EST',
+      email: 'hello@digitaldreamsmarketing.com',
+      website: 'https://digitaldreamsmarketing.com',
+      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=200&fit=crop',
       verified: true,
       dateAdded: '2025-01-02',
       status: 'approved',
       verificationSubmitted: true,
       verificationMethod: 'ein',
-      verificationDetails: 'EIN-12-3456789'
-    },
-    {
-      id: 3,
-      name: "Abuela's Market",
-      type: 'Grocery',
-      owner: 'Hispanic-owned',
-      description: 'Family-owned grocery store with authentic Hispanic foods.',
-      rating: '4.6 (203)',
-      address: '789 Market St, Rochester, NY',
-      phone: '(585) 555-0789',
-      hours: 'Daily: 8AM-10PM',
-      email: 'info@abuelasmarket.com',
-      website: 'https://abuelasmarket.com',
-      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop',
-      verified: true,
-      dateAdded: '2025-01-03',
-      status: 'approved',
-      verificationSubmitted: false,
-      verificationMethod: '',
-      verificationDetails: ''
+      verificationDetails: 'EIN-87-6543210'
     }
   ];
 
@@ -169,7 +158,6 @@ function App() {
     const updatedBusinesses = [...businesses, newBusiness];
     setBusinesses(updatedBusinesses);
     
-    // In a real implementation, this would update the JSON file via GitHub API
     alert('Business added successfully! Note: In production, this would update the businesses.json file and trigger a redeployment.');
     setShowAddForm(false);
   };
@@ -202,15 +190,18 @@ function App() {
       const formData = new FormData(e.target);
       const verificationMethod = formData.get('verificationMethod');
       const verificationDetails = formData.get('verificationDetails');
+      const locationType = formData.get('businessLocationType');
       
       const businessData = {
         business_name: formData.get('businessName'),
         business_category: formData.get('businessCategory'),
+        business_location_type: locationType,
         owner_ethnicity: formData.get('ownerEthnicity'),
         business_description: formData.get('businessDescription'),
         business_address: formData.get('businessAddress'),
         business_city: formData.get('businessCity'),
         business_state: formData.get('businessState'),
+        service_area: formData.get('serviceArea') || (locationType === 'online' ? 'Nationwide' : 'Local Area'),
         business_phone: formData.get('businessPhone'),
         business_email: formData.get('businessEmail'),
         business_website: formData.get('businessWebsite') || 'Not provided',
@@ -238,6 +229,7 @@ function App() {
       
       alert('🎉 Success! Your business submission has been sent for review.\n\nWe will contact you at ' + businessData.business_email + ' within 2-3 business days.' + verificationMessage + '\n\nThank you for joining the Melanin Market community!');
       e.target.reset();
+      setBusinessLocationType('physical');
       setCurrentView('profile');
 
     } catch (error) {
@@ -447,6 +439,25 @@ function App() {
       borderRadius: '4px',
       display: 'inline-block',
       marginBottom: '8px',
+    },
+    businessTypeIndicator: {
+      fontSize: '11px',
+      padding: '2px 6px',
+      borderRadius: '10px',
+      marginLeft: '8px',
+      fontWeight: 'bold',
+    },
+    physicalBadge: {
+      background: '#e5e7eb',
+      color: '#374151',
+    },
+    onlineBadge: {
+      background: '#dbeafe',
+      color: '#1d4ed8',
+    },
+    mobileBadge: {
+      background: '#d1fae5',
+      color: '#065f46',
     },
     businessDescription: {
       fontSize: '14px',
@@ -700,9 +711,13 @@ function App() {
     const [formData, setFormData] = useState(business || {
       name: '',
       type: '',
+      businessType: 'physical',
       owner: '',
       description: '',
       address: '',
+      city: '',
+      state: '',
+      serviceArea: '',
       phone: '',
       email: '',
       website: '',
@@ -723,6 +738,17 @@ function App() {
       setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    const handleBusinessTypeChange = (type) => {
+      setFormData(prev => ({
+        ...prev,
+        businessType: type,
+        address: type === 'online' ? 'Online Business' : 
+                type === 'mobile' ? 'Mobile Service' : '',
+        serviceArea: type === 'online' ? 'Nationwide' : 
+                    type === 'mobile' ? 'Local Area' : ''
+      }));
+    };
+
     return (
       <div style={styles.formContainer}>
         <h2 style={styles.formTitle}>{title}</h2>
@@ -736,6 +762,20 @@ function App() {
               onChange={(e) => handleChange('name', e.target.value)}
               required
             />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Business Type *</label>
+            <select
+              style={styles.select}
+              value={formData.businessType}
+              onChange={(e) => handleBusinessTypeChange(e.target.value)}
+              required
+            >
+              <option value="physical">Physical Location/Storefront</option>
+              <option value="online">Online Business Only</option>
+              <option value="mobile">Mobile/Service Business</option>
+            </select>
           </div>
 
           <div style={styles.formGroup}>
@@ -789,13 +829,71 @@ function App() {
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.label}>Address *</label>
+            <label style={styles.label}>
+              {formData.businessType === 'online' ? 'Business Base (Optional)' : 
+               formData.businessType === 'mobile' ? 'Service Area Base' : 'Address *'}
+            </label>
             <input
               style={styles.input}
               type="text"
               value={formData.address}
               onChange={(e) => handleChange('address', e.target.value)}
-              required
+              placeholder={
+                formData.businessType === 'online' ? 'Online Business' :
+                formData.businessType === 'mobile' ? 'Mobile Service' :
+                'Street address'
+              }
+              required={formData.businessType === 'physical'}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{...styles.formGroup, flex: 1}}>
+              <label style={styles.label}>City *</label>
+              <input
+                style={styles.input}
+                type="text"
+                value={formData.city}
+                onChange={(e) => handleChange('city', e.target.value)}
+                required
+              />
+            </div>
+            <div style={{...styles.formGroup, flex: 1}}>
+              <label style={styles.label}>State *</label>
+              <select 
+                style={styles.select} 
+                value={formData.state}
+                onChange={(e) => handleChange('state', e.target.value)}
+                required
+              >
+                <option value="">State</option>
+                <option value="NY">NY</option>
+                <option value="CA">CA</option>
+                <option value="TX">TX</option>
+                <option value="FL">FL</option>
+                <option value="IL">IL</option>
+                <option value="PA">PA</option>
+                <option value="OH">OH</option>
+                <option value="GA">GA</option>
+                <option value="NC">NC</option>
+                <option value="MI">MI</option>
+                {formData.businessType === 'online' && <option value="ONLINE">Online/National</option>}
+              </select>
+            </div>
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Service Area</label>
+            <input
+              style={styles.input}
+              type="text"
+              value={formData.serviceArea}
+              onChange={(e) => handleChange('serviceArea', e.target.value)}
+              placeholder={
+                formData.businessType === 'online' ? 'Nationwide, Worldwide, etc.' :
+                formData.businessType === 'mobile' ? 'Buffalo Metro Area, etc.' :
+                'Local area served'
+              }
             />
           </div>
 
@@ -837,6 +935,10 @@ function App() {
               style={styles.textarea}
               value={formData.hours}
               onChange={(e) => handleChange('hours', e.target.value)}
+              placeholder={
+                formData.businessType === 'online' ? '24/7 Online, Mon-Fri: 9AM-5PM Support, etc.' :
+                'Mon-Fri: 9AM-6PM, etc.'
+              }
             />
           </div>
 
@@ -921,6 +1023,9 @@ function App() {
   const renderAdminPanel = () => {
     const verifiedCount = businesses.filter(b => b.verificationSubmitted).length;
     const unverifiedCount = businesses.length - verifiedCount;
+    const physicalCount = businesses.filter(b => b.businessType === 'physical').length;
+    const onlineCount = businesses.filter(b => b.businessType === 'online').length;
+    const mobileCount = businesses.filter(b => b.businessType === 'mobile').length;
 
     return (
       <div style={styles.container}>
@@ -948,6 +1053,9 @@ function App() {
                   <span style={{ color: '#f59e0b', fontWeight: 'bold' }}> Verified: {verifiedCount}</span> | 
                   Unverified: {unverifiedCount}
                 </div>
+                <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                  Physical: {physicalCount} | Online: {onlineCount} | Mobile: {mobileCount}
+                </div>
               </div>
 
               <div>
@@ -969,9 +1077,22 @@ function App() {
                             🏆 VERIFIED
                           </span>
                         )}
+                        <span style={{
+                          ...styles.businessTypeIndicator,
+                          ...(business.businessType === 'physical' ? styles.physicalBadge :
+                              business.businessType === 'online' ? styles.onlineBadge :
+                              styles.mobileBadge)
+                        }}>
+                          {business.businessType === 'physical' ? '🏢 Physical' :
+                           business.businessType === 'online' ? '🌐 Online' :
+                           '🚐 Mobile'}
+                        </span>
                       </div>
                       <div style={{ fontSize: '14px', color: '#6b7280' }}>
                         {business.type} • {business.owner} • {business.address}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                        Service Area: {business.serviceArea || 'Not specified'}
                       </div>
                       {business.verificationSubmitted && (
                         <div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '2px' }}>
@@ -1051,7 +1172,7 @@ function App() {
         <div style={styles.searchSection}>
           <h1 style={styles.searchTitle}>Discover Minority-Owned Businesses</h1>
           <p style={styles.searchDescription}>
-            Support local entrepreneurs and build stronger communities together. Find authentic businesses owned by Black, Hispanic, Asian, Native American, and other minority entrepreneurs.
+            Support local entrepreneurs and build stronger communities together. Find authentic businesses owned by Black, Hispanic, Asian, Native American, and other minority entrepreneurs - both physical locations and online businesses.
           </p>
           
           <input
@@ -1084,9 +1205,9 @@ function App() {
 
         <div style={styles.featureCard}>
           <div style={styles.featureIcon}>🔍</div>
-          <h3 style={styles.featureTitle}>Discover Local</h3>
+          <h3 style={styles.featureTitle}>Discover Local & Online</h3>
           <p style={styles.featureDescription}>
-            Find authentic minority-owned businesses in your community, from restaurants and cafes to tech companies and wellness centers.
+            Find authentic minority-owned businesses in your community and online, from restaurants and cafes to tech companies and e-commerce stores.
           </p>
         </div>
 
@@ -1094,7 +1215,7 @@ function App() {
           <div style={styles.featureIcon}>💝</div>
           <h3 style={styles.featureTitle}>Support & Save</h3>
           <p style={styles.featureDescription}>
-            Save your favorite businesses and support entrepreneurs who are building stronger, more diverse communities.
+            Save your favorite businesses and support entrepreneurs who are building stronger, more diverse communities both locally and globally.
           </p>
         </div>
 
@@ -1102,7 +1223,7 @@ function App() {
           <div style={styles.featureIcon}>🌟</div>
           <h3 style={styles.featureTitle}>Build Community</h3>
           <p style={styles.featureDescription}>
-            Connect with business owners, leave reviews, and help create a thriving ecosystem of minority-owned enterprises.
+            Connect with business owners, leave reviews, and help create a thriving ecosystem of minority-owned enterprises across all business types.
           </p>
         </div>
       </div>
@@ -1140,7 +1261,20 @@ function App() {
               />
             )}
             
-            <h3 style={styles.businessName}>{business.name}</h3>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+              <h3 style={styles.businessName}>{business.name}</h3>
+              <span style={{
+                ...styles.businessTypeIndicator,
+                ...(business.businessType === 'physical' ? styles.physicalBadge :
+                    business.businessType === 'online' ? styles.onlineBadge :
+                    styles.mobileBadge)
+              }}>
+                {business.businessType === 'physical' ? '🏢' :
+                 business.businessType === 'online' ? '🌐' :
+                 '🚐'}
+              </span>
+            </div>
+            
             <span style={styles.businessType}>{business.type}</span>
             <p style={styles.businessDescription}>{business.description}</p>
             
@@ -1153,7 +1287,20 @@ function App() {
               )}
             </div>
             
-            <div style={styles.businessInfo}>📍 {business.address}</div>
+            <div style={styles.businessInfo}>
+              {business.businessType === 'online' ? (
+                <>🌐 Online Business • Serves: {business.serviceArea || business.city}</>
+              ) : business.businessType === 'mobile' ? (
+                <>🚐 Mobile Service • Serves: {business.serviceArea || business.city}</>
+              ) : (
+                <>📍 {business.address}</>
+              )}
+            </div>
+            
+            {business.serviceArea && business.businessType !== 'online' && business.businessType !== 'mobile' && (
+              <div style={styles.businessInfo}>🗺️ Service Area: {business.serviceArea}</div>
+            )}
+            
             <div style={styles.businessInfo}>📞 {business.phone}</div>
             {business.hours && <div style={styles.businessInfo}>🕒 {business.hours}</div>}
             {business.website && (
@@ -1200,7 +1347,7 @@ function App() {
         <div style={styles.formContainer}>
           <h1 style={styles.formTitle}>Add Your Business</h1>
           <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '24px' }}>
-            Join our community of minority-owned businesses and reach more customers.
+            Join our community of minority-owned businesses and reach more customers. We support physical locations, online businesses, and mobile services.
           </p>
           
           <form onSubmit={handleBusinessSubmit}>
@@ -1213,6 +1360,21 @@ function App() {
                 required
                 placeholder="Enter your business name"
               />
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Business Type *</label>
+              <select 
+                style={styles.select} 
+                name="businessLocationType"
+                value={businessLocationType}
+                onChange={(e) => setBusinessLocationType(e.target.value)}
+                required
+              >
+                <option value="physical">Physical Location/Storefront</option>
+                <option value="online">Online Business Only</option>
+                <option value="mobile">Mobile/Service Business</option>
+              </select>
             </div>
 
             <div style={styles.formGroup}>
@@ -1256,13 +1418,24 @@ function App() {
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Street Address *</label>
+              <label style={styles.label}>
+                {businessLocationType === 'online' ? 'Business Base (Optional)' : 
+                 businessLocationType === 'mobile' ? 'Service Area Base' : 'Street Address *'}
+              </label>
               <input
                 style={styles.input}
                 type="text"
                 name="businessAddress"
-                required
-                placeholder="123 Main Street"
+                required={businessLocationType === 'physical'}
+                placeholder={
+                  businessLocationType === 'online' ? 'Online Business (auto-filled)' :
+                  businessLocationType === 'mobile' ? 'Mobile Service (auto-filled)' :
+                  '123 Main Street'
+                }
+                defaultValue={
+                  businessLocationType === 'online' ? 'Online Business' :
+                  businessLocationType === 'mobile' ? 'Mobile Service' : ''
+                }
               />
             </div>
 
@@ -1274,7 +1447,7 @@ function App() {
                   type="text"
                   name="businessCity"
                   required
-                  placeholder="Buffalo"
+                  placeholder={businessLocationType === 'online' ? 'Base city' : 'Buffalo'}
                 />
               </div>
               <div style={{...styles.formGroup, flex: 1}}>
@@ -1291,8 +1464,23 @@ function App() {
                   <option value="GA">GA</option>
                   <option value="NC">NC</option>
                   <option value="MI">MI</option>
+                  {businessLocationType === 'online' && <option value="ONLINE">Online/National</option>}
                 </select>
               </div>
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Service Area</label>
+              <input
+                style={styles.input}
+                type="text"
+                name="serviceArea"
+                placeholder={
+                  businessLocationType === 'online' ? 'Nationwide, Worldwide, etc.' :
+                  businessLocationType === 'mobile' ? 'Buffalo Metro Area, Western NY, etc.' :
+                  'Local area you serve'
+                }
+              />
             </div>
 
             <div style={styles.formGroup}>
@@ -1332,7 +1520,10 @@ function App() {
               <textarea
                 style={styles.textarea}
                 name="businessHours"
-                placeholder="Mon-Fri: 9AM-6PM, Sat: 10AM-4PM, Sun: Closed"
+                placeholder={
+                  businessLocationType === 'online' ? '24/7 Online, Mon-Fri: 9AM-5PM Support, etc.' :
+                  'Mon-Fri: 9AM-6PM, Sat: 10AM-4PM, Sun: Closed'
+                }
               />
             </div>
 
@@ -1408,7 +1599,20 @@ function App() {
                 />
               )}
               
-              <h3 style={styles.businessName}>{business.name}</h3>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <h3 style={styles.businessName}>{business.name}</h3>
+                <span style={{
+                  ...styles.businessTypeIndicator,
+                  ...(business.businessType === 'physical' ? styles.physicalBadge :
+                      business.businessType === 'online' ? styles.onlineBadge :
+                      styles.mobileBadge)
+                }}>
+                  {business.businessType === 'physical' ? '🏢' :
+                   business.businessType === 'online' ? '🌐' :
+                   '🚐'}
+                </span>
+              </div>
+              
               <span style={styles.businessType}>{business.type}</span>
               <p style={styles.businessDescription}>{business.description}</p>
               
@@ -1421,7 +1625,16 @@ function App() {
                 )}
               </div>
               
-              <div style={styles.businessInfo}>📍 {business.address}</div>
+              <div style={styles.businessInfo}>
+                {business.businessType === 'online' ? (
+                  <>🌐 Online Business • Serves: {business.serviceArea || business.city}</>
+                ) : business.businessType === 'mobile' ? (
+                  <>🚐 Mobile Service • Serves: {business.serviceArea || business.city}</>
+                ) : (
+                  <>📍 {business.address}</>
+                )}
+              </div>
+              
               <div style={styles.businessInfo}>📞 {business.phone}</div>
               {business.hours && <div style={styles.businessInfo}>🕒 {business.hours}</div>}
               {business.website && (
