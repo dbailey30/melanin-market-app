@@ -17,6 +17,7 @@ function App() {
   const [editingBusiness, setEditingBusiness] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [logoClickCount, setLogoClickCount] = useState(0);
+  const [isUpdatingGitHub, setIsUpdatingGitHub] = useState(false);
 
   // Admin password - Change this to something secure
   const ADMIN_PASSWORD = 'melanin2025admin';
@@ -26,6 +27,15 @@ function App() {
     SERVICE_ID: 'service_l1mf75l',
     TEMPLATE_ID: 'template_1zwylhd',
     PUBLIC_KEY: 'jv0z8LO2xSTdzuvDz'
+  };
+
+  // GitHub API Configuration - These will be environment variables in production
+  const GITHUB_CONFIG = {
+    OWNER: process.env.REACT_APP_GITHUB_OWNER || 'dbailey30',
+    REPO: process.env.REACT_APP_GITHUB_REPO || 'melanin-market-app',
+    BRANCH: process.env.REACT_APP_GITHUB_BRANCH || 'main',
+    TOKEN: process.env.REACT_APP_GITHUB_TOKEN || '', // Set this in Vercel environment variables
+    FILE_PATH: 'frontend_app/public/businesses.json'
   };
 
   // All US States and Territories
@@ -85,6 +95,77 @@ function App() {
     { value: 'ONLINE', label: 'Online/National' }
   ];
 
+  // GitHub API Functions
+  const fetchBusinessesFromGitHub = async () => {
+    if (!GITHUB_CONFIG.TOKEN) {
+      console.warn('GitHub token not configured, using local data');
+      return null;
+    }
+
+    try {
+      const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.OWNER}/${GITHUB_CONFIG.REPO}/contents/${GITHUB_CONFIG.FILE_PATH}`, {
+        headers: {
+          'Authorization': `token ${GITHUB_CONFIG.TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = atob(data.content);
+      const businesses = JSON.parse(content);
+      
+      return { businesses, sha: data.sha };
+    } catch (error) {
+      console.error('Error fetching from GitHub:', error);
+      return null;
+    }
+  };
+
+  const updateBusinessesInGitHub = async (businesses, action, businessName) => {
+    if (!GITHUB_CONFIG.TOKEN) {
+      throw new Error('GitHub token not configured');
+    }
+
+    try {
+      // First, get the current file to get the SHA
+      const currentFile = await fetchBusinessesFromGitHub();
+      if (!currentFile) {
+        throw new Error('Could not fetch current file from GitHub');
+      }
+
+      const content = btoa(JSON.stringify(businesses, null, 2));
+      
+      const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.OWNER}/${GITHUB_CONFIG.REPO}/contents/${GITHUB_CONFIG.FILE_PATH}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${GITHUB_CONFIG.TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: `Update businesses.json - ${action} business: ${businessName}`,
+          content: content,
+          sha: currentFile.sha,
+          branch: GITHUB_CONFIG.BRANCH
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`GitHub API error: ${errorData.message}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating GitHub:', error);
+      throw error;
+    }
+  };
+
   // Google Maps integration
   const createGoogleMapsUrl = (address, businessName) => {
     const query = encodeURIComponent(`${businessName}, ${address}`);
@@ -110,10 +191,21 @@ function App() {
     }
   }, []);
 
-  // Load businesses from JSON file
+  // Load businesses from JSON file or GitHub
   useEffect(() => {
     const loadBusinesses = async () => {
       try {
+        // Try to load from GitHub first (for admin users)
+        if (GITHUB_CONFIG.TOKEN && isAdminAuthenticated) {
+          const githubData = await fetchBusinessesFromGitHub();
+          if (githubData) {
+            setBusinesses(githubData.businesses);
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Fallback to local JSON file
         const response = await fetch('/businesses.json');
         if (response.ok) {
           const data = await response.json();
@@ -131,7 +223,7 @@ function App() {
     };
 
     loadBusinesses();
-  }, []);
+  }, [isAdminAuthenticated]);
 
   // Handle logo clicks for admin access
   const handleLogoClick = () => {
@@ -215,39 +307,93 @@ function App() {
     setShowAddForm(false);
   };
 
-  // Business management functions
-  const handleAddBusiness = (businessData) => {
-    const newBusiness = {
-      ...businessData,
-      id: Math.max(...businesses.map(b => b.id), 0) + 1,
-      dateAdded: new Date().toISOString().split('T')[0],
-      status: 'approved',
-      verified: true
-    };
+  // Business management functions with GitHub integration
+  const handleAddBusiness = async (businessData) => {
+    setIsUpdatingGitHub(true);
     
-    const updatedBusinesses = [...businesses, newBusiness];
-    setBusinesses(updatedBusinesses);
-    
-    alert('Business added successfully! Note: In production, this would update the businesses.json file and trigger a redeployment.');
-    setShowAddForm(false);
-  };
-
-  const handleEditBusiness = (businessData) => {
-    const updatedBusinesses = businesses.map(b => 
-      b.id === editingBusiness.id ? { ...businessData, id: editingBusiness.id } : b
-    );
-    setBusinesses(updatedBusinesses);
-    
-    alert('Business updated successfully! Note: In production, this would update the businesses.json file and trigger a redeployment.');
-    setEditingBusiness(null);
-  };
-
-  const handleDeleteBusiness = (businessId) => {
-    if (window.confirm('Are you sure you want to delete this business?')) {
-      const updatedBusinesses = businesses.filter(b => b.id !== businessId);
-      setBusinesses(updatedBusinesses);
+    try {
+      const newBusiness = {
+        ...businessData,
+        id: Math.max(...businesses.map(b => b.id), 0) + 1,
+        dateAdded: new Date().toISOString().split('T')[0],
+        status: 'approved',
+        verified: true
+      };
       
-      alert('Business deleted successfully! Note: In production, this would update the businesses.json file and trigger a redeployment.');
+      const updatedBusinesses = [...businesses, newBusiness];
+      
+      // Update GitHub if token is available
+      if (GITHUB_CONFIG.TOKEN) {
+        await updateBusinessesInGitHub(updatedBusinesses, 'Add', newBusiness.name);
+        alert(`✅ Business "${newBusiness.name}" added successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
+      } else {
+        alert(`✅ Business "${newBusiness.name}" added successfully!\n\n⚠️ Note: GitHub integration not configured. Changes are temporary until you manually update businesses.json`);
+      }
+      
+      setBusinesses(updatedBusinesses);
+      setShowAddForm(false);
+      
+    } catch (error) {
+      console.error('Error adding business:', error);
+      alert(`❌ Error adding business: ${error.message}\n\nThe business was added locally but could not be saved to GitHub. Please try again or contact support.`);
+    } finally {
+      setIsUpdatingGitHub(false);
+    }
+  };
+
+  const handleEditBusiness = async (businessData) => {
+    setIsUpdatingGitHub(true);
+    
+    try {
+      const updatedBusinesses = businesses.map(b => 
+        b.id === editingBusiness.id ? { ...businessData, id: editingBusiness.id } : b
+      );
+      
+      // Update GitHub if token is available
+      if (GITHUB_CONFIG.TOKEN) {
+        await updateBusinessesInGitHub(updatedBusinesses, 'Edit', businessData.name);
+        alert(`✅ Business "${businessData.name}" updated successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
+      } else {
+        alert(`✅ Business "${businessData.name}" updated successfully!\n\n⚠️ Note: GitHub integration not configured. Changes are temporary until you manually update businesses.json`);
+      }
+      
+      setBusinesses(updatedBusinesses);
+      setEditingBusiness(null);
+      
+    } catch (error) {
+      console.error('Error editing business:', error);
+      alert(`❌ Error updating business: ${error.message}\n\nThe business was updated locally but could not be saved to GitHub. Please try again or contact support.`);
+    } finally {
+      setIsUpdatingGitHub(false);
+    }
+  };
+
+  const handleDeleteBusiness = async (businessId) => {
+    const businessToDelete = businesses.find(b => b.id === businessId);
+    if (!businessToDelete) return;
+    
+    if (window.confirm(`Are you sure you want to delete "${businessToDelete.name}"?\n\nThis action cannot be undone.`)) {
+      setIsUpdatingGitHub(true);
+      
+      try {
+        const updatedBusinesses = businesses.filter(b => b.id !== businessId);
+        
+        // Update GitHub if token is available
+        if (GITHUB_CONFIG.TOKEN) {
+          await updateBusinessesInGitHub(updatedBusinesses, 'Delete', businessToDelete.name);
+          alert(`✅ Business "${businessToDelete.name}" deleted successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
+        } else {
+          alert(`✅ Business "${businessToDelete.name}" deleted successfully!\n\n⚠️ Note: GitHub integration not configured. Changes are temporary until you manually update businesses.json`);
+        }
+        
+        setBusinesses(updatedBusinesses);
+        
+      } catch (error) {
+        console.error('Error deleting business:', error);
+        alert(`❌ Error deleting business: ${error.message}\n\nThe business was removed locally but could not be deleted from GitHub. Please try again or contact support.`);
+      } finally {
+        setIsUpdatingGitHub(false);
+      }
     }
   };
 
@@ -729,13 +875,14 @@ function App() {
       alignItems: 'center',
     },
     adminButton: {
-      background: '#3b82f6',
+      background: isUpdatingGitHub ? '#9ca3af' : '#3b82f6',
       color: 'white',
       padding: '10px 20px',
       fontSize: '14px',
       border: 'none',
       borderRadius: '6px',
-      cursor: 'pointer',
+      cursor: isUpdatingGitHub ? 'not-allowed' : 'pointer',
+      opacity: isUpdatingGitHub ? 0.7 : 1,
     },
     businessRow: {
       display: 'flex',
@@ -752,22 +899,33 @@ function App() {
       gap: '8px',
     },
     editButton: {
-      background: '#f59e0b',
+      background: isUpdatingGitHub ? '#9ca3af' : '#f59e0b',
       color: 'white',
       padding: '6px 12px',
       fontSize: '12px',
       border: 'none',
       borderRadius: '4px',
-      cursor: 'pointer',
+      cursor: isUpdatingGitHub ? 'not-allowed' : 'pointer',
+      opacity: isUpdatingGitHub ? 0.7 : 1,
     },
     deleteButton: {
-      background: '#ef4444',
+      background: isUpdatingGitHub ? '#9ca3af' : '#ef4444',
       color: 'white',
       padding: '6px 12px',
       fontSize: '12px',
       border: 'none',
       borderRadius: '4px',
-      cursor: 'pointer',
+      cursor: isUpdatingGitHub ? 'not-allowed' : 'pointer',
+      opacity: isUpdatingGitHub ? 0.7 : 1,
+    },
+    githubStatus: {
+      background: GITHUB_CONFIG.TOKEN ? '#d1fae5' : '#fef3c7',
+      color: GITHUB_CONFIG.TOKEN ? '#065f46' : '#92400e',
+      padding: '8px 12px',
+      borderRadius: '6px',
+      fontSize: '12px',
+      fontWeight: 'bold',
+      marginBottom: '16px',
     },
   };
 
@@ -857,6 +1015,21 @@ function App() {
     return (
       <div style={styles.formContainer}>
         <h2 style={styles.formTitle}>{title}</h2>
+        
+        {isUpdatingGitHub && (
+          <div style={{
+            background: '#dbeafe',
+            color: '#1d4ed8',
+            padding: '12px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            textAlign: 'center',
+            fontWeight: 'bold'
+          }}>
+            🔄 Updating GitHub repository... Please wait.
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit}>
           <div style={styles.formGroup}>
             <label style={styles.label}>Business Name *</label>
@@ -865,6 +1038,7 @@ function App() {
               type="text"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
+              disabled={isUpdatingGitHub}
               required
             />
           </div>
@@ -875,6 +1049,7 @@ function App() {
               style={styles.select}
               value={formData.businessType}
               onChange={(e) => handleBusinessTypeChange(e.target.value)}
+              disabled={isUpdatingGitHub}
               required
             >
               <option value="physical">Physical Location/Storefront</option>
@@ -889,6 +1064,7 @@ function App() {
               style={styles.select}
               value={formData.type}
               onChange={(e) => handleChange('type', e.target.value)}
+              disabled={isUpdatingGitHub}
               required
             >
               <option value="">Select category</option>
@@ -911,6 +1087,7 @@ function App() {
               style={styles.select}
               value={formData.owner}
               onChange={(e) => handleChange('owner', e.target.value)}
+              disabled={isUpdatingGitHub}
               required
             >
               <option value="">Select owner ethnicity</option>
@@ -929,6 +1106,7 @@ function App() {
               style={styles.textarea}
               value={formData.description}
               onChange={(e) => handleChange('description', e.target.value)}
+              disabled={isUpdatingGitHub}
               required
             />
           </div>
@@ -943,6 +1121,7 @@ function App() {
               type="text"
               value={formData.address}
               onChange={(e) => handleChange('address', e.target.value)}
+              disabled={isUpdatingGitHub}
               placeholder={
                 formData.businessType === 'online' ? 'Online Business' :
                 formData.businessType === 'mobile' ? 'Mobile Service' :
@@ -960,6 +1139,7 @@ function App() {
                 type="text"
                 value={formData.city}
                 onChange={(e) => handleChange('city', e.target.value)}
+                disabled={isUpdatingGitHub}
                 required
               />
             </div>
@@ -969,6 +1149,7 @@ function App() {
                 style={styles.select} 
                 value={formData.state}
                 onChange={(e) => handleChange('state', e.target.value)}
+                disabled={isUpdatingGitHub}
                 required
               >
                 {US_STATES.map(state => (
@@ -987,6 +1168,7 @@ function App() {
               type="text"
               value={formData.serviceArea}
               onChange={(e) => handleChange('serviceArea', e.target.value)}
+              disabled={isUpdatingGitHub}
               placeholder={
                 formData.businessType === 'online' ? 'Nationwide, Worldwide, etc.' :
                 formData.businessType === 'mobile' ? 'Buffalo Metro Area, etc.' :
@@ -1002,6 +1184,7 @@ function App() {
               type="tel"
               value={formData.phone}
               onChange={(e) => handleChange('phone', e.target.value)}
+              disabled={isUpdatingGitHub}
               required
             />
           </div>
@@ -1013,6 +1196,7 @@ function App() {
               type="email"
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
+              disabled={isUpdatingGitHub}
               required
             />
           </div>
@@ -1024,6 +1208,7 @@ function App() {
               type="url"
               value={formData.website}
               onChange={(e) => handleChange('website', e.target.value)}
+              disabled={isUpdatingGitHub}
             />
           </div>
 
@@ -1033,6 +1218,7 @@ function App() {
               style={styles.textarea}
               value={formData.hours}
               onChange={(e) => handleChange('hours', e.target.value)}
+              disabled={isUpdatingGitHub}
               placeholder={
                 formData.businessType === 'online' ? '24/7 Online, Mon-Fri: 9AM-5PM Support, etc.' :
                 'Mon-Fri: 9AM-6PM, etc.'
@@ -1047,6 +1233,7 @@ function App() {
               type="url"
               value={formData.image}
               onChange={(e) => handleChange('image', e.target.value)}
+              disabled={isUpdatingGitHub}
               placeholder="https://example.com/image.jpg"
             />
           </div>
@@ -1058,6 +1245,7 @@ function App() {
               type="text"
               value={formData.rating}
               onChange={(e) => handleChange('rating', e.target.value)}
+              disabled={isUpdatingGitHub}
               placeholder="4.5 (123)"
             />
           </div>
@@ -1068,6 +1256,7 @@ function App() {
               style={styles.select}
               value={formData.verificationSubmitted ? 'verified' : 'unverified'}
               onChange={(e) => handleChange('verificationSubmitted', e.target.value === 'verified')}
+              disabled={isUpdatingGitHub}
             >
               <option value="unverified">Not Verified</option>
               <option value="verified">Verified Business</option>
@@ -1080,6 +1269,7 @@ function App() {
               style={styles.select}
               value={formData.verificationMethod || ''}
               onChange={(e) => handleChange('verificationMethod', e.target.value)}
+              disabled={isUpdatingGitHub}
             >
               <option value="">Select verification method</option>
               <option value="business-license">Business License</option>
@@ -1096,18 +1286,24 @@ function App() {
               type="text"
               value={formData.verificationDetails || ''}
               onChange={(e) => handleChange('verificationDetails', e.target.value)}
+              disabled={isUpdatingGitHub}
               placeholder="License number, EIN, or other verification info"
             />
           </div>
 
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button style={{...styles.button, ...styles.primaryButton, flex: 1}} type="submit">
-              {business ? 'Update Business' : 'Add Business'}
+            <button 
+              style={{...styles.button, ...styles.primaryButton, flex: 1}} 
+              type="submit"
+              disabled={isUpdatingGitHub}
+            >
+              {isUpdatingGitHub ? '🔄 Updating...' : (business ? 'Update Business' : 'Add Business')}
             </button>
             <button
               style={{...styles.button, ...styles.secondaryButton, flex: 1}}
               type="button"
               onClick={onCancel}
+              disabled={isUpdatingGitHub}
             >
               Cancel
             </button>
@@ -1137,12 +1333,22 @@ function App() {
             </button>
           </div>
 
+          {/* GitHub Integration Status */}
+          <div style={styles.githubStatus}>
+            {GITHUB_CONFIG.TOKEN ? (
+              '✅ GitHub Integration: ACTIVE - Changes will automatically update the live site'
+            ) : (
+              '⚠️ GitHub Integration: NOT CONFIGURED - Changes are temporary only'
+            )}
+          </div>
+
           {!showAddForm && !editingBusiness && (
             <>
               <div style={styles.adminActions}>
                 <button
                   style={styles.adminButton}
                   onClick={() => setShowAddForm(true)}
+                  disabled={isUpdatingGitHub}
                 >
                   ➕ Add New Business
                 </button>
@@ -1202,12 +1408,14 @@ function App() {
                       <button
                         style={styles.editButton}
                         onClick={() => setEditingBusiness(business)}
+                        disabled={isUpdatingGitHub}
                       >
                         Edit
                       </button>
                       <button
                         style={styles.deleteButton}
                         onClick={() => handleDeleteBusiness(business.id)}
+                        disabled={isUpdatingGitHub}
                       >
                         Delete
                       </button>
