@@ -31,10 +31,10 @@ function App() {
 
   // GitHub API Configuration - These will be environment variables in production
   const GITHUB_CONFIG = {
-    OWNER: process.env.REACT_APP_GITHUB_OWNER || 'dbailey30',
-    REPO: process.env.REACT_APP_GITHUB_REPO || 'melanin-market-app',
-    BRANCH: process.env.REACT_APP_GITHUB_BRANCH || 'main',
-    TOKEN: process.env.REACT_APP_GITHUB_TOKEN || '', // Set this in Vercel environment variables
+    OWNER: process.env.VITE_APP_GITHUB_OWNER || 'dbailey30',
+    REPO: process.env.VITE_APP_GITHUB_REPO || 'melanin-market-app',
+    BRANCH: process.env.VITE_APP_GITHUB_BRANCH || 'main',
+    TOKEN: process.env.VITE_APP_GITHUB_TOKEN || '', // Set this in Vercel environment variables
     FILE_PATH: 'frontend_app/public/businesses.json'
   };
 
