@@ -35,7 +35,7 @@ function App() {
     REPO: process.env.VITE_APP_GITHUB_REPO || 'melanin-market-app',
     BRANCH: process.env.VITE_APP_GITHUB_BRANCH || 'main',
     TOKEN: process.env.VITE_APP_GITHUB_TOKEN || '', // Token removed for security
-    FILE_PATH: 'frontend_app/public/businesses.json'
+    FILE_PATH: 'businesses.json'
   };
 
   // All US States and Territories
