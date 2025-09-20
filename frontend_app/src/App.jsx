@@ -34,7 +34,7 @@ function App() {
     OWNER: 'dbailey30',
     REPO: 'melanin-market-app',
     BRANCH: 'main',
-    TOKEN: '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', //
+    TOKEN: '', //
     FILE_PATH: 'frontend_app/public/businesses.json'
   };
 
