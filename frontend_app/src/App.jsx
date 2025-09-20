@@ -34,7 +34,7 @@ function App() {
     OWNER: process.env.VITE_APP_GITHUB_OWNER || 'dbailey30',
     REPO: process.env.VITE_APP_GITHUB_REPO || 'melanin-market-app',
     BRANCH: process.env.VITE_APP_GITHUB_BRANCH || 'main',
-    TOKEN: process.env.VITE_APP_GITHUB_TOKEN || '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', // Set this in Vercel environment variables
+    TOKEN: process.env.VITE_APP_GITHUB_TOKEN || '', // Token removed for security
     FILE_PATH: 'frontend_app/public/businesses.json'
   };
 
