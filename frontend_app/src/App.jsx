@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
-import './App.css'; // Import the CSS file with Tailwind and custom styles
 
 function App() {
   const [currentView, setCurrentView] = useState('landing');
@@ -19,10 +18,8 @@ function App() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [isUpdatingGitHub, setIsUpdatingGitHub] = useState(false);
-  const [githubIntegrationStatus, setGithubIntegrationStatus] = useState('checking');
 
-  // Admin password - This is now only used for frontend validation
-  // The real authentication happens on the server side
+  // Admin password - Change this to something secure
   const ADMIN_PASSWORD = 'melanin2025admin';
 
   // EmailJS Configuration - REPLACE WITH YOUR ACTUAL VALUES
@@ -37,7 +34,7 @@ function App() {
     { value: '', label: 'Select State' },
     { value: 'AL', label: 'Alabama' },
     { value: 'AK', label: 'Alaska' },
-    { value: 'AZ', label:'Arizona' },
+    { value: 'AZ', label: 'Arizona' },
     { value: 'AR', label: 'Arkansas' },
     { value: 'CA', label: 'California' },
     { value: 'CO', label: 'Colorado' },
@@ -89,73 +86,48 @@ function App() {
     { value: 'ONLINE', label: 'Online/National' }
   ];
 
-  // Secure API Functions - These call Vercel API functions instead of GitHub directly
-  const checkGitHubIntegration = async () => {
-    try {
-      const response = await fetch('/api/github-status');
-      const data = await response.json();
-      setGithubIntegrationStatus(data.status);
-      return data.status === 'active';
-    } catch (error) {
-      console.error('Error checking GitHub integration:', error);
-      setGithubIntegrationStatus('error');
-      return false;
-    }
-  };
-
-  const fetchBusinessesFromAPI = async () => {
+  // SECURE API FUNCTIONS - Replace GitHub API calls with secure endpoints
+  const fetchBusinessesFromGitHub = async () => {
     try {
       const response = await fetch('/api/businesses');
       const data = await response.json();
       
       if (data.success) {
-        return data.businesses;
+        return { businesses: data.businesses, sha: data.sha };
       } else {
-        throw new Error(data.message || 'Failed to fetch businesses');
+        console.warn('GitHub API not available, using local data');
+        return null;
       }
     } catch (error) {
-      console.error('Error fetching businesses from API:', error);
+      console.error('Error fetching from secure API:', error);
       return null;
     }
   };
 
-  const updateBusinessInAPI = async (action, businessData, businessId = null) => {
+  const updateBusinessesInGitHub = async (businesses, action, businessName) => {
     try {
-      let url = '/api/businesses';
-      let method = 'POST';
-      let body = {
-        adminAuth: ADMIN_PASSWORD,
-        businessData: businessData
-      };
-
-      if (action === 'edit') {
-        method = 'PUT';
-        body.businessId = businessId;
-      } else if (action === 'delete') {
-        method = 'DELETE';
-        body = {
-          adminAuth: ADMIN_PASSWORD,
-          businessId: businessId
-        };
-      }
-
-      const response = await fetch(url, {
-        method: method,
+      const response = await fetch('/api/businesses', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify({
+          adminAuth: ADMIN_PASSWORD,
+          businesses: businesses,
+          action: action,
+          businessName: businessName
+        })
       });
 
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || `Failed to ${action} business`);
+        throw new Error(data.message || 'Failed to update businesses');
       }
 
       return data;
     } catch (error) {
-      console.error(`Error ${action}ing business:`, error);
+      console.error('Error updating via secure API:', error);
       throw error;
     }
   };
@@ -185,18 +157,15 @@ function App() {
     }
   }, []);
 
-  // Load businesses and check GitHub integration
+  // Load businesses from JSON file or GitHub
   useEffect(() => {
     const loadBusinesses = async () => {
       try {
-        // Check GitHub integration status
-        const githubActive = await checkGitHubIntegration();
-        
-        if (githubActive && isAdminAuthenticated) {
-          // Try to load from API (GitHub) for admin users
-          const apiBusinesses = await fetchBusinessesFromAPI();
-          if (apiBusinesses) {
-            setBusinesses(apiBusinesses);
+        // Try to load from GitHub first (for admin users)
+        if (isAdminAuthenticated) {
+          const githubData = await fetchBusinessesFromGitHub();
+          if (githubData) {
+            setBusinesses(githubData.businesses);
             setIsLoading(false);
             return;
           }
@@ -309,30 +278,26 @@ function App() {
     setIsUpdatingGitHub(true);
     
     try {
-      const result = await updateBusinessInAPI('add', businessData);
+      const newBusiness = {
+        ...businessData,
+        id: Math.max(...businesses.map(b => b.id), 0) + 1,
+        dateAdded: new Date().toISOString().split('T')[0],
+        status: 'approved',
+        verified: true
+      };
+
+      const updatedBusinesses = [...businesses, newBusiness];
       
-      if (githubIntegrationStatus === 'active') {
+      // Try to update GitHub via secure API
+      try {
+        await updateBusinessesInGitHub(updatedBusinesses, 'add', businessData.name);
         alert(`✅ Business "${businessData.name}" added successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
-        
-        // Refresh businesses from API
-        const updatedBusinesses = await fetchBusinessesFromAPI();
-        if (updatedBusinesses) {
-          setBusinesses(updatedBusinesses);
-        }
-      } else {
-        alert(`✅ Business "${businessData.name}" added successfully!\n\n⚠️ Note: GitHub integration not active. Changes are temporary until GitHub is configured.`);
-        
-        // Add locally for immediate feedback
-        const newBusiness = {
-          ...businessData,
-          id: Math.max(...businesses.map(b => b.id), 0) + 1,
-          dateAdded: new Date().toISOString().split('T')[0],
-          status: 'approved',
-          verified: true
-        };
-        setBusinesses(prev => [...prev, newBusiness]);
+      } catch (error) {
+        console.error('GitHub update failed:', error);
+        alert(`✅ Business "${businessData.name}" added locally!\n\n⚠️ GitHub update failed: ${error.message}\nChanges are temporary until GitHub sync is restored.`);
       }
       
+      setBusinesses(updatedBusinesses);
       setShowAddForm(false);
       
     } catch (error) {
@@ -347,25 +312,20 @@ function App() {
     setIsUpdatingGitHub(true);
     
     try {
-      const result = await updateBusinessInAPI('edit', businessData, editingBusiness.id);
+      const updatedBusinesses = businesses.map(b => 
+        b.id === editingBusiness.id ? { ...businessData, id: editingBusiness.id } : b
+      );
       
-      if (githubIntegrationStatus === 'active') {
+      // Try to update GitHub via secure API
+      try {
+        await updateBusinessesInGitHub(updatedBusinesses, 'edit', businessData.name);
         alert(`✅ Business "${businessData.name}" updated successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
-        
-        // Refresh businesses from API
-        const updatedBusinesses = await fetchBusinessesFromAPI();
-        if (updatedBusinesses) {
-          setBusinesses(updatedBusinesses);
-        }
-      } else {
-        alert(`✅ Business "${businessData.name}" updated successfully!\n\n⚠️ Note: GitHub integration not active. Changes are temporary until GitHub is configured.`);
-        
-        // Update locally for immediate feedback
-        setBusinesses(prev => prev.map(b => 
-          b.id === editingBusiness.id ? { ...businessData, id: editingBusiness.id } : b
-        ));
+      } catch (error) {
+        console.error('GitHub update failed:', error);
+        alert(`✅ Business "${businessData.name}" updated locally!\n\n⚠️ GitHub update failed: ${error.message}\nChanges are temporary until GitHub sync is restored.`);
       }
       
+      setBusinesses(updatedBusinesses);
       setEditingBusiness(null);
       
     } catch (error) {
@@ -384,22 +344,18 @@ function App() {
       setIsUpdatingGitHub(true);
       
       try {
-        const result = await updateBusinessInAPI('delete', null, businessId);
+        const updatedBusinesses = businesses.filter(b => b.id !== businessId);
         
-        if (githubIntegrationStatus === 'active') {
+        // Try to update GitHub via secure API
+        try {
+          await updateBusinessesInGitHub(updatedBusinesses, 'delete', businessToDelete.name);
           alert(`✅ Business "${businessToDelete.name}" deleted successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
-          
-          // Refresh businesses from API
-          const updatedBusinesses = await fetchBusinessesFromAPI();
-          if (updatedBusinesses) {
-            setBusinesses(updatedBusinesses);
-          }
-        } else {
-          alert(`✅ Business "${businessToDelete.name}" deleted successfully!\n\n⚠️ Note: GitHub integration not active. Changes are temporary until GitHub is configured.`);
-          
-          // Remove locally for immediate feedback
-          setBusinesses(prev => prev.filter(b => b.id !== businessId));
+        } catch (error) {
+          console.error('GitHub update failed:', error);
+          alert(`✅ Business "${businessToDelete.name}" deleted locally!\n\n⚠️ GitHub update failed: ${error.message}\nChanges are temporary until GitHub sync is restored.`);
         }
+        
+        setBusinesses(updatedBusinesses);
         
       } catch (error) {
         console.error('Error deleting business:', error);
@@ -495,34 +451,6 @@ function App() {
 
   // Get unique categories
   const categories = ['All', ...new Set(businesses.map(business => business.type))];
-
-  // Render GitHub Integration Status (for admin)
-  const renderGitHubStatus = () => {
-    if (!isAdminAuthenticated) return null;
-
-    const statusConfig = {
-      'checking': { color: 'text-yellow-600', icon: '🔄', message: 'Checking GitHub integration...' },
-      'active': { color: 'text-green-600', icon: '✅', message: 'GitHub integration active' },
-      'disabled': { color: 'text-gray-600', icon: '⚠️', message: 'GitHub integration not configured' },
-      'error': { color: 'text-red-600', icon: '❌', message: 'GitHub integration error' }
-    };
-
-    const status = statusConfig[githubIntegrationStatus] || statusConfig['error'];
-
-    return (
-      <div className={`mb-4 p-3 rounded-lg border ${status.color} bg-gray-50`}>
-        <div className="flex items-center gap-2">
-          <span>{status.icon}</span>
-          <span className="font-medium">{status.message}</span>
-        </div>
-        {githubIntegrationStatus === 'disabled' && (
-          <p className="text-sm mt-1 text-gray-600">
-            Configure GITHUB_TOKEN in Vercel environment variables to enable automatic updates.
-          </p>
-        )}
-      </div>
-    );
-  };
 
   // Business Form Component
   const BusinessForm = ({ business, onSubmit, onCancel }) => {
@@ -1494,8 +1422,6 @@ function App() {
         </header>
 
         <main className="max-w-7xl mx-auto px-4 py-8">
-          {renderGitHubStatus()}
-          
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Manage Businesses</h2>
             <button
