@@ -1,6 +1,6 @@
-import './App.css';
 import React, { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
+import './App.css'; // Import the CSS file with Tailwind and custom styles
 
 function App() {
   const [currentView, setCurrentView] = useState('landing');
@@ -37,7 +37,7 @@ function App() {
     { value: '', label: 'Select State' },
     { value: 'AL', label: 'Alabama' },
     { value: 'AK', label: 'Alaska' },
-    { value: 'AZ', label: 'Arizona' },
+    { value: 'AZ', label:'Arizona' },
     { value: 'AR', label: 'Arkansas' },
     { value: 'CA', label: 'California' },
     { value: 'CO', label: 'Colorado' },
