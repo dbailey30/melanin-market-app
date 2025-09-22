@@ -29,9 +29,6 @@ function App() {
     PUBLIC_KEY: 'jv0z8LO2xSTdzuvDz'
   };
 
-  // GitHub integration now handled securely via API endpoints
-  // No client-side configuration needed
-
   // All US States and Territories
   const US_STATES = [
     { value: '', label: 'Select State' },
@@ -89,16 +86,16 @@ function App() {
     { value: 'ONLINE', label: 'Online/National' }
   ];
 
-  // GitHub API Functions
+  // Secure GitHub API Functions
   const fetchBusinessesFromGitHub = async () => {
     try {
       const response = await fetch('/api/businesses');
       const data = await response.json();
-
+      
       if (data.success) {
         return { businesses: data.businesses, sha: data.sha };
       } else {
-        console.warn( 'Github API not available, using local data');
+        console.warn('GitHub API not available, using local data');
         return null;
       }
     } catch (error) {
@@ -276,7 +273,7 @@ function App() {
     setShowAddForm(false);
   };
 
-  // Business Management Functions - Replace the ones that reference GITHUB_CONFIG
+  // Business management functions with secure GitHub integration
   const handleAddBusiness = async (businessData) => {
     setIsUpdatingGitHub(true);
     
@@ -288,15 +285,16 @@ function App() {
         status: 'approved',
         verified: true
       };
-      
+
       const updatedBusinesses = [...businesses, newBusiness];
       
-      // Try to update via secure API
+      // Try to update GitHub via secure API
       try {
-        await updateBusinessesInGitHub(updatedBusinesses, 'Add', newBusiness.name);
-        alert(`✅ Business "${newBusiness.name}" added successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
+        await updateBusinessesInGitHub(updatedBusinesses, 'add', businessData.name);
+        alert(`✅ Business "${businessData.name}" added successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
       } catch (error) {
-        alert(`✅ Business "${newBusiness.name}" added successfully!\n\n⚠️ GitHub update failed: ${error.message}\nChanges are temporary until Github sync is restored.`);
+        console.error('GitHub update failed:', error);
+        alert(`✅ Business "${businessData.name}" added locally!\n\n⚠️ GitHub update failed: ${error.message}\nChanges are temporary until GitHub sync is restored.`);
       }
       
       setBusinesses(updatedBusinesses);
@@ -318,12 +316,13 @@ function App() {
         b.id === editingBusiness.id ? { ...businessData, id: editingBusiness.id } : b
       );
       
-      // Try to update via secure API
+      // Try to update GitHub via secure API
       try {
-        await updateBusinessesInGitHub(updatedBusinesses, 'Edit', businessData.name);
+        await updateBusinessesInGitHub(updatedBusinesses, 'edit', businessData.name);
         alert(`✅ Business "${businessData.name}" updated successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
       } catch (error) {
-        alert(`✅ Business "${businessData.name}" updated successfully!\n\n⚠️ GitHub update failed: ${error.message}\nChanges are temporary until Github sync is restored.');
+        console.error('GitHub update failed:', error);
+        alert(`✅ Business "${businessData.name}" updated locally!\n\n⚠️ GitHub update failed: ${error.message}\nChanges are temporary until GitHub sync is restored.`);
       }
       
       setBusinesses(updatedBusinesses);
@@ -347,13 +346,13 @@ function App() {
       try {
         const updatedBusinesses = businesses.filter(b => b.id !== businessId);
         
-        // Try to update via secure API
+        // Try to update GitHub via secure API
         try {
-          await updateBusinessesInGitHub(updatedBusinesses, 'Delete', businessToDelete.name);
+          await updateBusinessesInGitHub(updatedBusinesses, 'delete', businessToDelete.name);
           alert(`✅ Business "${businessToDelete.name}" deleted successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
         } catch (error) {
-          console.error('Github update failed:', error);
-          alert(`✅ Business "${businessToDelete.name}" deleted successfully!\n\n⚠️ GitHub update failed: ${error.message}\nChanges are temporary until Github sync is restored.`);
+          console.error('GitHub update failed:', error);
+          alert(`✅ Business "${businessToDelete.name}" deleted locally!\n\n⚠️ GitHub update failed: ${error.message}\nChanges are temporary until GitHub sync is restored.`);
         }
         
         setBusinesses(updatedBusinesses);
@@ -409,25 +408,27 @@ function App() {
 
       console.log('Email sent successfully:', result);
       
-      const verificationMessage = businessData.verification_submitted 
-        ? '\n\n🏆 Your business will receive a verified badge once approved!'
-        : '';
+      // Show success message
+      alert('🎉 Thank you for submitting your business!\n\n' +
+            '✅ Your submission has been received\n' +
+            '📧 You will receive a confirmation email shortly\n' +
+            '⏳ Our team will review your business within 24-48 hours\n\n' +
+            'We appreciate your contribution to the Melanin Market community!');
       
-      alert('🎉 Success! Your business submission has been sent for review.\n\nWe will contact you at ' + businessData.business_email + ' within 2-3 business days.' + verificationMessage + '\n\nThank you for joining the Melanin Market community!');
+      // Reset form
       e.target.reset();
       setBusinessLocationType('physical');
-      setCurrentView('profile');
-
+      setCurrentView('landing');
+      
     } catch (error) {
-      console.error('Failed to send email:', error);
-      alert('❌ Submission Error\n\nThere was an issue sending your submission. Please try again or contact us directly at admin@melanin-market.com\n\nError details: ' + (error.text || error.message));
+      console.error('Error sending email:', error);
+      alert('❌ There was an error submitting your business. Please try again or contact support.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const navigateToView = (view) => setCurrentView(view);
-  const handleSearch = () => setCurrentView('businesses');
+  // Toggle favorites
   const toggleFavorite = (businessId) => {
     setFavorites(prev => 
       prev.includes(businessId) 
@@ -436,1291 +437,188 @@ function App() {
     );
   };
 
-  const handleInstallApp = () => {
-    if (window.deferredPrompt) {
-      window.deferredPrompt.prompt();
-      window.deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the install prompt');
-        }
-        window.deferredPrompt = null;
-      });
-    } else {
-      alert('To install this app:\n\n• On Chrome/Edge: Look for the install icon in the address bar\n• On Safari: Tap Share → Add to Home Screen\n• On Firefox: Look for the install option in the menu');
-    }
-  };
-
+  // Filter businesses based on search and category
   const filteredBusinesses = businesses.filter(business => {
+    const matchesSearch = business.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+                         business.description.toLowerCase().includes(searchInput.toLowerCase()) ||
+                         business.city.toLowerCase().includes(searchInput.toLowerCase()) ||
+                         business.state.toLowerCase().includes(searchInput.toLowerCase());
+    
     const matchesCategory = selectedCategory === 'All' || business.type === selectedCategory;
-    return matchesCategory && business.status === 'approved';
+    
+    return matchesSearch && matchesCategory;
   });
 
-  const favoriteBusinesses = businesses.filter(business => favorites.includes(business.id));
+  // Get unique categories
+  const categories = ['All', ...new Set(businesses.map(business => business.type))];
 
-  // Address component with Google Maps integration
-  const AddressDisplay = ({ business }) => {
-    if (business.businessType === 'online') {
-      return (
-        <div style={styles.businessInfo}>
-          🌐 Online Business • Serves: {business.serviceArea || business.city}
-        </div>
-      );
-    } else if (business.businessType === 'mobile') {
-      return (
-        <div style={styles.businessInfo}>
-          🚐 Mobile Service • Serves: {business.serviceArea || business.city}
-        </div>
-      );
-    } else {
-      return (
-        <div 
-          style={styles.addressLink}
-          onClick={() => handleAddressClick(business)}
-          title="Click for directions"
-        >
-          📍 {business.address} (Get Directions)
-        </div>
-      );
-    }
-  };
-
-  // Styles
-  const styles = {
-    container: {
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #fef7ed 0%, #fef3c7 100%)',
-      fontFamily: 'Arial, sans-serif',
-      paddingBottom: '80px',
-    },
-    header: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-      background: 'rgba(255, 255, 255, 0.1)',
-      position: 'relative',
-    },
-    logo: {
-      width: '40px',
-      height: '40px',
-      marginRight: '10px',
-      borderRadius: '8px',
-      objectFit: 'contain',
-      background: 'white',
-      padding: '4px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      cursor: 'pointer',
-    },
-    title: {
-      fontSize: '28px',
-      fontWeight: 'bold',
-      color: '#1f2937',
-    },
-    subtitle: {
-      fontSize: '14px',
-      color: '#6b7280',
-      marginTop: '4px',
-    },
-    adminButton: {
-      position: 'absolute',
-      bottom: '10px',
-      right: '20px',
-      background: 'rgba(234, 88, 12, 0.1)',
-      border: '1px solid rgba(234, 88, 12, 0.3)',
-      color: '#ea580c',
-      padding: '6px 12px',
-      fontSize: '12px',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      opacity: 0.7,
-    },
-    content: {
-      padding: '20px',
-      maxWidth: '800px',
-      margin: '0 auto',
-    },
-    searchSection: {
-      textAlign: 'center',
-      marginBottom: '40px',
-    },
-    searchTitle: {
-      fontSize: '24px',
-      fontWeight: 'bold',
-      color: '#1f2937',
-      marginBottom: '16px',
-    },
-    searchDescription: {
-      fontSize: '16px',
-      color: '#6b7280',
-      marginBottom: '24px',
-      lineHeight: '1.5',
-    },
-    searchInput: {
-      width: '100%',
-      maxWidth: '400px',
-      padding: '12px 16px',
-      fontSize: '16px',
-      border: '2px solid #d1d5db',
-      borderRadius: '8px',
-      marginBottom: '16px',
-      outline: 'none',
-      boxSizing: 'border-box',
-    },
-    button: {
-      padding: '12px 24px',
-      fontSize: '16px',
-      fontWeight: 'bold',
-      border: 'none',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      margin: '8px',
-      transition: 'all 0.2s',
-    },
-    primaryButton: {
-      background: '#ea580c',
-      color: 'white',
-      width: '100%',
-      maxWidth: '400px',
-    },
-    secondaryButton: {
-      background: 'transparent',
-      color: '#ea580c',
-      border: '2px solid #ea580c',
-      width: '100%',
-      maxWidth: '400px',
-    },
-    cityButton: {
-      background: '#f3f4f6',
-      color: '#374151',
-      border: '1px solid #d1d5db',
-      padding: '8px 16px',
-      margin: '4px',
-      fontSize: '14px',
-    },
-    bottomNav: {
-      position: 'fixed',
-      bottom: '0',
-      left: '0',
-      right: '0',
-      background: 'white',
-      borderTop: '1px solid #e5e7eb',
-      display: 'flex',
-      justifyContent: 'space-around',
-      padding: '12px 0',
-      zIndex: 1000,
-    },
-    navButton: {
-      background: 'none',
-      border: 'none',
-      fontSize: '12px',
-      color: '#6b7280',
-      cursor: 'pointer',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      padding: '4px',
-    },
-    activeNavButton: {
-      color: '#ea580c',
-    },
-    businessCard: {
-      background: 'white',
-      borderRadius: '12px',
-      padding: '16px',
-      marginBottom: '16px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      position: 'relative',
-    },
-    businessImage: {
-      width: '100%',
-      height: '200px',
-      objectFit: 'cover',
-      borderRadius: '8px',
-      marginBottom: '12px',
-    },
-    businessName: {
-      fontSize: '20px',
-      fontWeight: 'bold',
-      color: '#1f2937',
-      marginBottom: '4px',
-    },
-    businessType: {
-      fontSize: '12px',
-      background: '#fef3c7',
-      color: '#92400e',
-      padding: '4px 8px',
-      borderRadius: '4px',
-      display: 'inline-block',
-      marginBottom: '8px',
-    },
-    businessTypeIndicator: {
-      fontSize: '11px',
-      padding: '2px 6px',
-      borderRadius: '10px',
-      marginLeft: '8px',
-      fontWeight: 'bold',
-    },
-    physicalBadge: {
-      background: '#e5e7eb',
-      color: '#374151',
-    },
-    onlineBadge: {
-      background: '#dbeafe',
-      color: '#1d4ed8',
-    },
-    mobileBadge: {
-      background: '#d1fae5',
-      color: '#065f46',
-    },
-    businessDescription: {
-      fontSize: '14px',
-      color: '#6b7280',
-      marginBottom: '12px',
-      lineHeight: '1.4',
-    },
-    businessInfo: {
-      fontSize: '14px',
-      color: '#374151',
-      marginBottom: '4px',
-    },
-    addressLink: {
-      fontSize: '14px',
-      color: '#ea580c',
-      marginBottom: '4px',
-      cursor: 'pointer',
-      textDecoration: 'underline',
-      transition: 'color 0.2s',
-    },
-    rating: {
-      color: '#fbbf24',
-      marginBottom: '12px',
-      display: 'flex',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: '8px',
-    },
-    verifiedBadge: {
-      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-      color: 'white',
-      padding: '6px 12px',
-      borderRadius: '20px',
-      fontSize: '12px',
-      fontWeight: 'bold',
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '4px',
-      boxShadow: '0 3px 6px rgba(245, 158, 11, 0.4)',
-      border: '2px solid #f59e0b',
-      whiteSpace: 'nowrap',
-    },
-    backButton: {
-      background: '#f3f4f6',
-      color: '#374151',
-      border: '1px solid #d1d5db',
-      padding: '8px 16px',
-      borderRadius: '6px',
-      fontSize: '14px',
-      cursor: 'pointer',
-      margin: '16px',
-    },
-    featureCard: {
-      background: 'white',
-      borderRadius: '12px',
-      padding: '20px',
-      marginBottom: '16px',
-      textAlign: 'center',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    },
-    featureIcon: {
-      fontSize: '32px',
-      marginBottom: '12px',
-    },
-    featureTitle: {
-      fontSize: '18px',
-      fontWeight: 'bold',
-      color: '#1f2937',
-      marginBottom: '8px',
-    },
-    featureDescription: {
-      fontSize: '14px',
-      color: '#6b7280',
-      lineHeight: '1.4',
-    },
-    formContainer: {
-      background: 'white',
-      borderRadius: '12px',
-      padding: '24px',
-      margin: '20px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-    },
-    formTitle: {
-      fontSize: '24px',
-      fontWeight: 'bold',
-      color: '#1f2937',
-      marginBottom: '16px',
-      textAlign: 'center',
-    },
-    formGroup: {
-      marginBottom: '16px',
-    },
-    label: {
-      display: 'block',
-      fontSize: '14px',
-      fontWeight: 'bold',
-      color: '#374151',
-      marginBottom: '4px',
-    },
-    input: {
-      width: '100%',
-      padding: '12px',
-      fontSize: '16px',
-      border: '2px solid #d1d5db',
-      borderRadius: '8px',
-      outline: 'none',
-      boxSizing: 'border-box',
-    },
-    textarea: {
-      width: '100%',
-      padding: '12px',
-      fontSize: '16px',
-      border: '2px solid #d1d5db',
-      borderRadius: '8px',
-      outline: 'none',
-      minHeight: '100px',
-      resize: 'vertical',
-      boxSizing: 'border-box',
-    },
-    select: {
-      width: '100%',
-      padding: '12px',
-      fontSize: '16px',
-      border: '2px solid #d1d5db',
-      borderRadius: '8px',
-      outline: 'none',
-      background: 'white',
-      boxSizing: 'border-box',
-    },
-    submitButton: {
-      background: isSubmitting ? '#9ca3af' : '#ea580c',
-      color: 'white',
-      width: '100%',
-      marginTop: '20px',
-      cursor: isSubmitting ? 'not-allowed' : 'pointer',
-      opacity: isSubmitting ? 0.7 : 1,
-    },
-    adminContainer: {
-      background: 'white',
-      borderRadius: '12px',
-      padding: '24px',
-      margin: '20px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-    },
-    adminHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '24px',
-      borderBottom: '2px solid #e5e7eb',
-      paddingBottom: '16px',
-    },
-    adminTitle: {
-      fontSize: '24px',
-      fontWeight: 'bold',
-      color: '#1f2937',
-    },
-    logoutButton: {
-      background: '#ef4444',
-      color: 'white',
-      padding: '8px 16px',
-      fontSize: '14px',
-      border: 'none',
-      borderRadius: '6px',
-      cursor: 'pointer',
-    },
-    adminActions: {
-      display: 'flex',
-      gap: '12px',
-      marginBottom: '24px',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-    },
-    adminButton: {
-      background: isUpdatingGitHub ? '#9ca3af' : '#3b82f6',
-      color: 'white',
-      padding: '10px 20px',
-      fontSize: '14px',
-      border: 'none',
-      borderRadius: '6px',
-      cursor: isUpdatingGitHub ? 'not-allowed' : 'pointer',
-      opacity: isUpdatingGitHub ? 0.7 : 1,
-    },
-    businessRow: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '12px',
-      border: '1px solid #e5e7eb',
-      borderRadius: '8px',
-      marginBottom: '8px',
-      background: '#f9fafb',
-    },
-    businessActions: {
-      display: 'flex',
-      gap: '8px',
-    },
-    editButton: {
-      background: isUpdatingGitHub ? '#9ca3af' : '#f59e0b',
-      color: 'white',
-      padding: '6px 12px',
-      fontSize: '12px',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: isUpdatingGitHub ? 'not-allowed' : 'pointer',
-      opacity: isUpdatingGitHub ? 0.7 : 1,
-    },
-    deleteButton: {
-      background: isUpdatingGitHub ? '#9ca3af' : '#ef4444',
-      color: 'white',
-      padding: '6px 12px',
-      fontSize: '12px',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: isUpdatingGitHub ? 'not-allowed' : 'pointer',
-      opacity: isUpdatingGitHub ? 0.7 : 1,
-    },
-    githubStatus: {
-      background: GITHUB_CONFIG.TOKEN ? '#d1fae5' : '#fef3c7',
-      color: GITHUB_CONFIG.TOKEN ? '#065f46' : '#92400e',
-      padding: '8px 12px',
-      borderRadius: '6px',
-      fontSize: '12px',
-      fontWeight: 'bold',
-      marginBottom: '16px',
-    },
-  };
-
-  // PWA install prompt handling
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      window.deferredPrompt = e;
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
-
-  // Admin Login Form
-  const renderAdminLogin = () => (
-    <div style={styles.container}>
-      <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
-      
-      <div style={styles.formContainer}>
-        <h1 style={styles.formTitle}>Admin Login</h1>
-        <form onSubmit={handleAdminLogin}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Password</label>
-            <input
-              style={styles.input}
-              type="password"
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              placeholder="Enter admin password"
-              required
-            />
-          </div>
-          <button style={{...styles.button, ...styles.primaryButton}} type="submit">
-            Login
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-
-  // Business Form Component (for add/edit)
-  const BusinessForm = ({ business, onSubmit, onCancel, title }) => {
-    const [formData, setFormData] = useState(business || {
-      name: '',
-      type: '',
-      businessType: 'physical',
-      owner: '',
-      description: '',
-      address: '',
-      city: '',
-      state: '',
-      serviceArea: '',
-      phone: '',
-      email: '',
-      website: '',
-      hours: '',
-      image: '',
-      rating: '0.0 (0)',
-      verificationSubmitted: false,
-      verificationMethod: '',
-      verificationDetails: ''
-    });
+  // Business Form Component
+  const BusinessForm = ({ business, onSubmit, onCancel }) => {
+    const [formBusinessType, setFormBusinessType] = useState(business?.businessType || 'physical');
 
     const handleSubmit = (e) => {
       e.preventDefault();
-      onSubmit(formData);
-    };
-
-    const handleChange = (field, value) => {
-      setFormData(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleBusinessTypeChange = (type) => {
-      setFormData(prev => ({
-        ...prev,
-        businessType: type,
-        address: type === 'online' ? 'Online Business' : 
-                type === 'mobile' ? 'Mobile Service' : '',
-        serviceArea: type === 'online' ? 'Nationwide' : 
-                    type === 'mobile' ? 'Local Area' : ''
-      }));
+      const formData = new FormData(e.target);
+      
+      const businessData = {
+        name: formData.get('name'),
+        type: formData.get('type'),
+        businessType: formBusinessType,
+        owner: formData.get('owner'),
+        description: formData.get('description'),
+        address: formBusinessType === 'physical' ? formData.get('address') : 'Online Business',
+        city: formData.get('city'),
+        state: formData.get('state'),
+        serviceArea: formData.get('serviceArea'),
+        phone: formData.get('phone'),
+        hours: formData.get('hours'),
+        email: formData.get('email'),
+        website: formData.get('website'),
+        image: formData.get('image'),
+        verificationMethod: formData.get('verificationMethod'),
+        verificationDetails: formData.get('verificationDetails'),
+        verificationSubmitted: !!(formData.get('verificationMethod') && formData.get('verificationDetails'))
+      };
+      
+      onSubmit(businessData);
     };
 
     return (
-      <div style={styles.formContainer}>
-        <h2 style={styles.formTitle}>{title}</h2>
-        
-        {isUpdatingGitHub && (
-          <div style={{
-            background: '#dbeafe',
-            color: '#1d4ed8',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '16px',
-            textAlign: 'center',
-            fontWeight: 'bold'
-          }}>
-            🔄 Updating GitHub repository... Please wait.
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Business Name *</label>
-            <input
-              style={styles.input}
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              disabled={isUpdatingGitHub}
-              required
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Business Type *</label>
-            <select
-              style={styles.select}
-              value={formData.businessType}
-              onChange={(e) => handleBusinessTypeChange(e.target.value)}
-              disabled={isUpdatingGitHub}
-              required
-            >
-              <option value="physical">Physical Location/Storefront</option>
-              <option value="online">Online Business Only</option>
-              <option value="mobile">Mobile/Service Business</option>
-            </select>
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Category *</label>
-            <select
-              style={styles.select}
-              value={formData.type}
-              onChange={(e) => handleChange('type', e.target.value)}
-              disabled={isUpdatingGitHub}
-              required
-            >
-              <option value="">Select category</option>
-              <option value="Restaurant">Restaurant</option>
-              <option value="Technology">Technology</option>
-              <option value="Beauty">Beauty & Personal Care</option>
-              <option value="Grocery">Grocery & Food</option>
-              <option value="Coffee">Coffee & Beverages</option>
-              <option value="Health">Health & Wellness</option>
-              <option value="Retail">Retail & Shopping</option>
-              <option value="Services">Professional Services</option>
-              <option value="Entertainment">Entertainment</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Owner Ethnicity *</label>
-            <select
-              style={styles.select}
-              value={formData.owner}
-              onChange={(e) => handleChange('owner', e.target.value)}
-              disabled={isUpdatingGitHub}
-              required
-            >
-              <option value="">Select owner ethnicity</option>
-              <option value="Black-owned">Black-owned</option>
-              <option value="Hispanic-owned">Hispanic-owned</option>
-              <option value="Asian-owned">Asian-owned</option>
-              <option value="Native American-owned">Native American-owned</option>
-              <option value="Latino-owned">Latino-owned</option>
-              <option value="Other minority-owned">Other minority-owned</option>
-            </select>
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Description *</label>
-            <textarea
-              style={styles.textarea}
-              value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              disabled={isUpdatingGitHub}
-              required
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>
-              {formData.businessType === 'online' ? 'Business Base (Optional)' : 
-               formData.businessType === 'mobile' ? 'Service Area Base' : 'Address *'}
-            </label>
-            <input
-              style={styles.input}
-              type="text"
-              value={formData.address}
-              onChange={(e) => handleChange('address', e.target.value)}
-              disabled={isUpdatingGitHub}
-              placeholder={
-                formData.businessType === 'online' ? 'Online Business' :
-                formData.businessType === 'mobile' ? 'Mobile Service' :
-                'Street address'
-              }
-              required={formData.businessType === 'physical'}
-            />
-          </div>
-
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <div style={{...styles.formGroup, flex: 1}}>
-              <label style={styles.label}>City *</label>
-              <input
-                style={styles.input}
-                type="text"
-                value={formData.city}
-                onChange={(e) => handleChange('city', e.target.value)}
-                disabled={isUpdatingGitHub}
-                required
-              />
-            </div>
-            <div style={{...styles.formGroup, flex: 1}}>
-              <label style={styles.label}>State *</label>
-              <select 
-                style={styles.select} 
-                value={formData.state}
-                onChange={(e) => handleChange('state', e.target.value)}
-                disabled={isUpdatingGitHub}
-                required
-              >
-                {US_STATES.map(state => (
-                  <option key={state.value} value={state.value}>
-                    {state.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Service Area</label>
-            <input
-              style={styles.input}
-              type="text"
-              value={formData.serviceArea}
-              onChange={(e) => handleChange('serviceArea', e.target.value)}
-              disabled={isUpdatingGitHub}
-              placeholder={
-                formData.businessType === 'online' ? 'Nationwide, Worldwide, etc.' :
-                formData.businessType === 'mobile' ? 'Buffalo Metro Area, etc.' :
-                'Local area served'
-              }
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Phone *</label>
-            <input
-              style={styles.input}
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleChange('phone', e.target.value)}
-              disabled={isUpdatingGitHub}
-              required
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Email *</label>
-            <input
-              style={styles.input}
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange('email', e.target.value)}
-              disabled={isUpdatingGitHub}
-              required
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Website</label>
-            <input
-              style={styles.input}
-              type="url"
-              value={formData.website}
-              onChange={(e) => handleChange('website', e.target.value)}
-              disabled={isUpdatingGitHub}
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Hours</label>
-            <textarea
-              style={styles.textarea}
-              value={formData.hours}
-              onChange={(e) => handleChange('hours', e.target.value)}
-              disabled={isUpdatingGitHub}
-              placeholder={
-                formData.businessType === 'online' ? '24/7 Online, Mon-Fri: 9AM-5PM Support, etc.' :
-                'Mon-Fri: 9AM-6PM, etc.'
-              }
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Image URL</label>
-            <input
-              style={styles.input}
-              type="url"
-              value={formData.image}
-              onChange={(e) => handleChange('image', e.target.value)}
-              disabled={isUpdatingGitHub}
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Rating</label>
-            <input
-              style={styles.input}
-              type="text"
-              value={formData.rating}
-              onChange={(e) => handleChange('rating', e.target.value)}
-              disabled={isUpdatingGitHub}
-              placeholder="4.5 (123)"
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Verification Status</label>
-            <select
-              style={styles.select}
-              value={formData.verificationSubmitted ? 'verified' : 'unverified'}
-              onChange={(e) => handleChange('verificationSubmitted', e.target.value === 'verified')}
-              disabled={isUpdatingGitHub}
-            >
-              <option value="unverified">Not Verified</option>
-              <option value="verified">Verified Business</option>
-            </select>
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Verification Method</label>
-            <select
-              style={styles.select}
-              value={formData.verificationMethod || ''}
-              onChange={(e) => handleChange('verificationMethod', e.target.value)}
-              disabled={isUpdatingGitHub}
-            >
-              <option value="">Select verification method</option>
-              <option value="business-license">Business License</option>
-              <option value="ein">EIN Number</option>
-              <option value="dba">DBA Certificate</option>
-              <option value="other">Other Documentation</option>
-            </select>
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Verification Details</label>
-            <input
-              style={styles.input}
-              type="text"
-              value={formData.verificationDetails || ''}
-              onChange={(e) => handleChange('verificationDetails', e.target.value)}
-              disabled={isUpdatingGitHub}
-              placeholder="License number, EIN, or other verification info"
-            />
-          </div>
-
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button 
-              style={{...styles.button, ...styles.primaryButton, flex: 1}} 
-              type="submit"
-              disabled={isUpdatingGitHub}
-            >
-              {isUpdatingGitHub ? '🔄 Updating...' : (business ? 'Update Business' : 'Add Business')}
-            </button>
-            <button
-              style={{...styles.button, ...styles.secondaryButton, flex: 1}}
-              type="button"
-              onClick={onCancel}
-              disabled={isUpdatingGitHub}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    );
-  };
-
-  // Admin Panel
-  const renderAdminPanel = () => {
-    const verifiedCount = businesses.filter(b => b.verificationSubmitted).length;
-    const unverifiedCount = businesses.length - verifiedCount;
-    const physicalCount = businesses.filter(b => b.businessType === 'physical').length;
-    const onlineCount = businesses.filter(b => b.businessType === 'online').length;
-    const mobileCount = businesses.filter(b => b.businessType === 'mobile').length;
-
-    return (
-      <div style={styles.container}>
-        <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
-        
-        <div style={styles.adminContainer}>
-          <div style={styles.adminHeader}>
-            <h1 style={styles.adminTitle}>Business Management</h1>
-            <button style={styles.logoutButton} onClick={handleAdminLogout}>
-              Logout
-            </button>
-          </div>
-
-          {/* GitHub Integration Status */}
-          <div style={styles.githubStatus}>
-            {GITHUB_CONFIG.TOKEN ? (
-              '✅ GitHub Integration: ACTIVE - Changes will automatically update the live site'
-            ) : (
-              '⚠️ GitHub Integration: NOT CONFIGURED - Changes are temporary only'
-            )}
-          </div>
-
-          {!showAddForm && !editingBusiness && (
-            <>
-              <div style={styles.adminActions}>
-                <button
-                  style={styles.adminButton}
-                  onClick={() => setShowAddForm(true)}
-                  disabled={isUpdatingGitHub}
-                >
-                  ➕ Add New Business
-                </button>
-                <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                  Total: {businesses.length} | 
-                  <span style={{ color: '#f59e0b', fontWeight: 'bold' }}> Verified: {verifiedCount}</span> | 
-                  Unverified: {unverifiedCount}
-                </div>
-                <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                  Physical: {physicalCount} | Online: {onlineCount} | Mobile: {mobileCount}
-                </div>
-              </div>
-
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <h3 className="text-xl font-bold mb-4">
+            {business ? 'Edit Business' : 'Add New Business'}
+          </h3>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 style={{ marginBottom: '16px', color: '#1f2937' }}>Current Businesses</h3>
-                {businesses.map(business => (
-                  <div key={business.id} style={styles.businessRow}>
-                    <div>
-                      <div style={{ fontWeight: 'bold', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {business.name}
-                        {business.verificationSubmitted && (
-                          <span style={{
-                            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                            color: 'white',
-                            padding: '2px 6px',
-                            borderRadius: '10px',
-                            fontSize: '10px',
-                            fontWeight: 'bold',
-                          }}>
-                            🏆 VERIFIED
-                          </span>
-                        )}
-                        <span style={{
-                          ...styles.businessTypeIndicator,
-                          ...(business.businessType === 'physical' ? styles.physicalBadge :
-                              business.businessType === 'online' ? styles.onlineBadge :
-                              styles.mobileBadge)
-                        }}>
-                          {business.businessType === 'physical' ? '🏢 Physical' :
-                           business.businessType === 'online' ? '🌐 Online' :
-                           '🚐 Mobile'}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                        {business.type} • {business.owner} • {business.address}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                        Service Area: {business.serviceArea || 'Not specified'}
-                      </div>
-                      {business.verificationSubmitted && (
-                        <div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '2px' }}>
-                          Verification: {business.verificationMethod} - {business.verificationDetails}
-                        </div>
-                      )}
-                    </div>
-                    <div style={styles.businessActions}>
-                      <button
-                        style={styles.editButton}
-                        onClick={() => setEditingBusiness(business)}
-                        disabled={isUpdatingGitHub}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        style={styles.deleteButton}
-                        onClick={() => handleDeleteBusiness(business.id)}
-                        disabled={isUpdatingGitHub}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {showAddForm && (
-            <BusinessForm
-              title="Add New Business"
-              onSubmit={handleAddBusiness}
-              onCancel={() => setShowAddForm(false)}
-            />
-          )}
-
-          {editingBusiness && (
-            <BusinessForm
-              business={editingBusiness}
-              title="Edit Business"
-              onSubmit={handleEditBusiness}
-              onCancel={() => setEditingBusiness(null)}
-            />
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  // Landing Page
-  const renderLandingPage = () => (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <img 
-          src="/logo.PNG" 
-          alt="Melanin Market" 
-          style={styles.logo} 
-          onClick={handleLogoClick}
-          onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block';}} 
-        />
-        <div style={{...styles.logo, display: 'none'}} onClick={handleLogoClick}>🛍️</div>
-        <div>
-          <div style={styles.title}>MELANIN MARKET</div>
-          <div style={styles.subtitle}>Discover • Support • Thrive</div>
-        </div>
-        
-        {/* Hidden Admin Button */}
-        <button 
-          style={styles.adminButton}
-          onClick={() => setCurrentView('admin')}
-          title="Admin Access"
-        >
-          Admin
-        </button>
-      </div>
-      
-      <div style={styles.content}>
-        <div style={styles.searchSection}>
-          <h1 style={styles.searchTitle}>Discover Minority-Owned Businesses</h1>
-          <p style={styles.searchDescription}>
-            Support local entrepreneurs and build stronger communities together. Find authentic businesses owned by Black, Hispanic, Asian, Native American, and other minority entrepreneurs - both physical locations and online businesses.
-          </p>
-          
-          <input
-            style={styles.searchInput}
-            type="text"
-            placeholder="Enter City, State (e.g., Buffalo, NY)"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-          
-          <div style={{ marginBottom: '16px' }}>
-            <button style={{...styles.button, ...styles.primaryButton}} onClick={handleSearch}>
-              🔍 Find Businesses
-            </button>
-          </div>
-          
-          <div>
-            <button style={{...styles.button, ...styles.secondaryButton}} onClick={() => navigateToView('profile')}>
-              ➕ List Your Business
-            </button>
-          </div>
-          
-          <div style={{ marginTop: '24px' }}>
-            <p style={{ fontSize: '16px', color: '#6b7280', marginBottom: '12px' }}>Popular Cities:</p>
-            <button style={{...styles.button, ...styles.cityButton}} onClick={handleSearch}>Buffalo, NY</button>
-            <button style={{...styles.button, ...styles.cityButton}} onClick={handleSearch}>Rochester, NY</button>
-            <button style={{...styles.button, ...styles.cityButton}} onClick={handleSearch}>Syracuse, NY</button>
-          </div>
-        </div>
-
-        <div style={styles.featureCard}>
-          <div style={styles.featureIcon}>🔍</div>
-          <h3 style={styles.featureTitle}>Discover Local & Online</h3>
-          <p style={styles.featureDescription}>
-            Find authentic minority-owned businesses in your community and online, from restaurants and cafes to tech companies and e-commerce stores.
-          </p>
-        </div>
-
-        <div style={styles.featureCard}>
-          <div style={styles.featureIcon}>💝</div>
-          <h3 style={styles.featureTitle}>Support & Save</h3>
-          <p style={styles.featureDescription}>
-            Save your favorite businesses and support entrepreneurs who are building stronger, more diverse communities both locally and globally.
-          </p>
-        </div>
-
-        <div style={styles.featureCard}>
-          <div style={styles.featureIcon}>🌟</div>
-          <h3 style={styles.featureTitle}>Build Community</h3>
-          <p style={styles.featureDescription}>
-            Connect with business owners, leave reviews, and help create a thriving ecosystem of minority-owned enterprises across all business types.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Business Listings
-  const renderBusinessListings = () => (
-    <div style={styles.container}>
-      <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
-      
-      <div style={styles.content}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>All Businesses</h1>
-        
-        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-          <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'All' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('All')}>All</button>
-          <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Restaurant' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('Restaurant')}>Restaurant</button>
-          <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Technology' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('Technology')}>Technology</button>
-          <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Grocery' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('Grocery')}>Grocery</button>
-          <button style={{...styles.button, ...styles.cityButton, ...(selectedCategory === 'Entertainment' ? {background: '#ea580c', color: 'white'} : {})}} onClick={() => setSelectedCategory('Entertainment')}>Entertainment</button>
-        </div>
-        
-        <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '20px' }}>
-          {filteredBusinesses.length} businesses found
-        </p>
-        
-        {filteredBusinesses.map(business => (
-          <div key={business.id} style={styles.businessCard}>
-            {business.image && (
-              <img 
-                src={business.image} 
-                alt={business.name}
-                style={styles.businessImage}
-                onError={(e) => {e.target.style.display='none';}}
-              />
-            )}
-            
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-              <h3 style={styles.businessName}>{business.name}</h3>
-              <span style={{
-                ...styles.businessTypeIndicator,
-                ...(business.businessType === 'physical' ? styles.physicalBadge :
-                    business.businessType === 'online' ? styles.onlineBadge :
-                    styles.mobileBadge)
-              }}>
-                {business.businessType === 'physical' ? '🏢' :
-                 business.businessType === 'online' ? '🌐' :
-                 '🚐'}
-              </span>
-            </div>
-            
-            <span style={styles.businessType}>{business.type}</span>
-            <p style={styles.businessDescription}>{business.description}</p>
-            
-            <div style={styles.rating}>
-              ⭐⭐⭐⭐⭐ {business.rating}
-              {business.verificationSubmitted && (
-                <span style={styles.verifiedBadge}>
-                  🏆 Verified Business
-                </span>
-              )}
-            </div>
-            
-            <AddressDisplay business={business} />
-            
-            {business.serviceArea && business.businessType !== 'online' && business.businessType !== 'mobile' && (
-              <div style={styles.businessInfo}>🗺️ Service Area: {business.serviceArea}</div>
-            )}
-            
-            <div style={styles.businessInfo}>📞 {business.phone}</div>
-            {business.hours && <div style={styles.businessInfo}>🕒 {business.hours}</div>}
-            {business.website && (
-              <div style={styles.businessInfo}>
-                🌐 <a href={business.website} target="_blank" rel="noopener noreferrer" style={{color: '#ea580c'}}>{business.website}</a>
-              </div>
-            )}
-            
-            <button 
-              style={{
-                ...styles.button,
-                background: favorites.includes(business.id) ? '#ef4444' : '#ea580c',
-                color: 'white',
-                width: '100%',
-                marginTop: '12px'
-              }}
-              onClick={() => toggleFavorite(business.id)}
-            >
-              {favorites.includes(business.id) ? '❤️ Remove from Favorites' : '🤍 Add to Favorites'}
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  // Profile/Add Business Page
-  const renderProfile = () => (
-    <div style={styles.container}>
-      <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
-      
-      <div style={styles.content}>
-        <div style={styles.featureCard}>
-          <div style={styles.featureIcon}>📱</div>
-          <h3 style={styles.featureTitle}>Install Melanin Market</h3>
-          <p style={styles.featureDescription}>
-            Add this app to your home screen for quick access to minority-owned businesses in your area.
-          </p>
-          <button style={{...styles.button, ...styles.primaryButton}} onClick={handleInstallApp}>
-            📲 Install App
-          </button>
-        </div>
-
-        <div style={styles.formContainer}>
-          <h1 style={styles.formTitle}>Add Your Business</h1>
-          <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '24px' }}>
-            Join our community of minority-owned businesses and reach more customers. We support physical locations, online businesses, and mobile services.
-          </p>
-          
-          <form onSubmit={handleBusinessSubmit}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Business Name *</label>
-              <input
-                style={styles.input}
-                type="text"
-                name="businessName"
-                required
-                placeholder="Enter your business name"
-              />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Business Type *</label>
-              <select 
-                style={styles.select} 
-                name="businessLocationType"
-                value={businessLocationType}
-                onChange={(e) => setBusinessLocationType(e.target.value)}
-                required
-              >
-                <option value="physical">Physical Location/Storefront</option>
-                <option value="online">Online Business Only</option>
-                <option value="mobile">Mobile/Service Business</option>
-              </select>
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Business Category *</label>
-              <select style={styles.select} name="businessCategory" required>
-                <option value="">Select a category</option>
-                <option value="restaurant">Restaurant</option>
-                <option value="technology">Technology</option>
-                <option value="beauty">Beauty & Personal Care</option>
-                <option value="grocery">Grocery & Food</option>
-                <option value="coffee">Coffee & Beverages</option>
-                <option value="health">Health & Wellness</option>
-                <option value="retail">Retail & Shopping</option>
-                <option value="services">Professional Services</option>
-                <option value="entertainment">Entertainment</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Owner Ethnicity *</label>
-              <select style={styles.select} name="ownerEthnicity" required>
-                <option value="">Select owner ethnicity</option>
-                <option value="black">Black-owned</option>
-                <option value="hispanic">Hispanic-owned</option>
-                <option value="asian">Asian-owned</option>
-                <option value="native-american">Native American-owned</option>
-                <option value="latino">Latino-owned</option>
-                <option value="other">Other minority-owned</option>
-              </select>
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Business Description *</label>
-              <textarea
-                style={styles.textarea}
-                name="businessDescription"
-                required
-                placeholder="Describe your business, products, or services"
-              />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>
-                {businessLocationType === 'online' ? 'Business Base (Optional)' : 
-                 businessLocationType === 'mobile' ? 'Service Area Base' : 'Street Address *'}
-              </label>
-              <input
-                style={styles.input}
-                type="text"
-                name="businessAddress"
-                required={businessLocationType === 'physical'}
-                placeholder={
-                  businessLocationType === 'online' ? 'Online Business (auto-filled)' :
-                  businessLocationType === 'mobile' ? 'Mobile Service (auto-filled)' :
-                  '123 Main Street'
-                }
-                defaultValue={
-                  businessLocationType === 'online' ? 'Online Business' :
-                  businessLocationType === 'mobile' ? 'Mobile Service' : ''
-                }
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <div style={{...styles.formGroup, flex: 1}}>
-                <label style={styles.label}>City *</label>
+                <label className="block text-sm font-medium mb-1">Business Name *</label>
                 <input
-                  style={styles.input}
                   type="text"
-                  name="businessCity"
+                  name="name"
+                  defaultValue={business?.name || ''}
                   required
-                  placeholder={businessLocationType === 'online' ? 'Base city' : 'Buffalo'}
+                  className="w-full p-2 border rounded-lg"
                 />
               </div>
-              <div style={{...styles.formGroup, flex: 1}}>
-                <label style={styles.label}>State *</label>
-                <select style={styles.select} name="businessState" required>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Category *</label>
+                <select
+                  name="type"
+                  defaultValue={business?.type || ''}
+                  required
+                  className="w-full p-2 border rounded-lg"
+                >
+                  <option value="">Select Category</option>
+                  <option value="Restaurant">Restaurant</option>
+                  <option value="Retail">Retail</option>
+                  <option value="Technology">Technology</option>
+                  <option value="Healthcare">Healthcare</option>
+                  <option value="Beauty">Beauty & Wellness</option>
+                  <option value="Professional Services">Professional Services</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Education">Education</option>
+                  <option value="Automotive">Automotive</option>
+                  <option value="Real Estate">Real Estate</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Business Type *</label>
+              <div className="flex gap-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="businessType"
+                    value="physical"
+                    checked={formBusinessType === 'physical'}
+                    onChange={(e) => setFormBusinessType(e.target.value)}
+                    className="mr-2"
+                  />
+                  Physical Location
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="businessType"
+                    value="online"
+                    checked={formBusinessType === 'online'}
+                    onChange={(e) => setFormBusinessType(e.target.value)}
+                    className="mr-2"
+                  />
+                  Online/Digital Business
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Owner Ethnicity *</label>
+              <select
+                name="owner"
+                defaultValue={business?.owner || ''}
+                required
+                className="w-full p-2 border rounded-lg"
+              >
+                <option value="">Select Owner Ethnicity</option>
+                <option value="Black-owned">Black-owned</option>
+                <option value="Latino-owned">Latino-owned</option>
+                <option value="Asian-owned">Asian-owned</option>
+                <option value="Native American-owned">Native American-owned</option>
+                <option value="Multi-ethnic">Multi-ethnic</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Description *</label>
+              <textarea
+                name="description"
+                defaultValue={business?.description || ''}
+                required
+                rows="3"
+                className="w-full p-2 border rounded-lg"
+                placeholder="Describe your business, services, and what makes it special..."
+              />
+            </div>
+
+            {formBusinessType === 'physical' && (
+              <div>
+                <label className="block text-sm font-medium mb-1">Address *</label>
+                <input
+                  type="text"
+                  name="address"
+                  defaultValue={business?.address || ''}
+                  required={formBusinessType === 'physical'}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="123 Main St, City, State"
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">City *</label>
+                <input
+                  type="text"
+                  name="city"
+                  defaultValue={business?.city || ''}
+                  required
+                  className="w-full p-2 border rounded-lg"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">State *</label>
+                <select
+                  name="state"
+                  defaultValue={business?.state || ''}
+                  required
+                  className="w-full p-2 border rounded-lg"
+                >
                   {US_STATES.map(state => (
                     <option key={state.value} value={state.value}>
                       {state.label}
@@ -1730,247 +628,917 @@ function App() {
               </div>
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Service Area</label>
+            <div>
+              <label className="block text-sm font-medium mb-1">Service Area</label>
               <input
-                style={styles.input}
                 type="text"
                 name="serviceArea"
-                placeholder={
-                  businessLocationType === 'online' ? 'Nationwide, Worldwide, etc.' :
-                  businessLocationType === 'mobile' ? 'Buffalo Metro Area, Western NY, etc.' :
-                  'Local area you serve'
-                }
+                defaultValue={business?.serviceArea || ''}
+                className="w-full p-2 border rounded-lg"
+                placeholder={formBusinessType === 'online' ? 'Nationwide' : 'Local Area, Metro Area, etc.'}
               />
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Phone Number *</label>
-              <input
-                style={styles.input}
-                type="tel"
-                name="businessPhone"
-                required
-                placeholder="(716) 555-0123"
-              />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Email Address *</label>
-              <input
-                style={styles.input}
-                type="email"
-                name="businessEmail"
-                required
-                placeholder="info@yourbusiness.com"
-              />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Website (Optional)</label>
-              <input
-                style={styles.input}
-                type="url"
-                name="businessWebsite"
-                placeholder="https://www.yourbusiness.com"
-              />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Business Hours (Optional)</label>
-              <textarea
-                style={styles.textarea}
-                name="businessHours"
-                placeholder={
-                  businessLocationType === 'online' ? '24/7 Online, Mon-Fri: 9AM-5PM Support, etc.' :
-                  'Mon-Fri: 9AM-6PM, Sat: 10AM-4PM, Sun: Closed'
-                }
-              />
-            </div>
-
-            <div style={{ background: '#fef3c7', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
-              <h4 style={{ color: '#92400e', marginBottom: '8px', fontSize: '16px' }}>🏆 Business Verification (Optional)</h4>
-              <p style={{ color: '#92400e', fontSize: '14px', marginBottom: '12px' }}>
-                Provide verification details to receive a verified business badge and build customer trust.
-              </p>
-              
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Verification Method</label>
-                <select style={styles.select} name="verificationMethod">
-                  <option value="">Select verification method</option>
-                  <option value="business-license">Business License</option>
-                  <option value="ein">EIN Number</option>
-                  <option value="dba">DBA Certificate</option>
-                  <option value="other">Other Documentation</option>
-                </select>
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Verification Details</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Phone</label>
                 <input
-                  style={styles.input}
+                  type="tel"
+                  name="phone"
+                  defaultValue={business?.phone || ''}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Hours</label>
+                <input
                   type="text"
-                  name="verificationDetails"
-                  placeholder="License number, EIN, or other verification info"
+                  name="hours"
+                  defaultValue={business?.hours || ''}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="Mon-Fri: 9AM-5PM"
                 />
               </div>
             </div>
 
-            <button 
-              style={{...styles.button, ...styles.submitButton}} 
-              type="submit"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? '📤 Submitting...' : '📤 Submit Business for Review'}
-            </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  defaultValue={business?.email || ''}
+                  className="w-full p-2 border rounded-lg"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Website</label>
+                <input
+                  type="url"
+                  name="website"
+                  defaultValue={business?.website || ''}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="https://example.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Image URL</label>
+              <input
+                type="url"
+                name="image"
+                defaultValue={business?.image || ''}
+                className="w-full p-2 border rounded-lg"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+
+            <div className="border-t pt-4">
+              <h4 className="font-medium mb-2">Business Verification (Optional)</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Verification Method</label>
+                  <select
+                    name="verificationMethod"
+                    defaultValue={business?.verificationMethod || ''}
+                    className="w-full p-2 border rounded-lg"
+                  >
+                    <option value="">Select Method</option>
+                    <option value="business-license">Business License</option>
+                    <option value="ein">EIN (Tax ID)</option>
+                    <option value="website">Official Website</option>
+                    <option value="social-media">Social Media Verification</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Verification Details</label>
+                  <input
+                    type="text"
+                    name="verificationDetails"
+                    defaultValue={business?.verificationDetails || ''}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="License #, EIN, URL, etc."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <button
+                type="submit"
+                disabled={isUpdatingGitHub}
+                className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+              >
+                {isUpdatingGitHub ? 'Saving...' : (business ? 'Update Business' : 'Add Business')}
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
           </form>
         </div>
       </div>
-    </div>
-  );
-
-  // Favorites Page
-  const renderFavorites = () => (
-    <div style={styles.container}>
-      <button style={styles.backButton} onClick={() => navigateToView('landing')}>← Back</button>
-      
-      <div style={styles.content}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>My Favorites</h1>
-        
-        {favoriteBusinesses.length === 0 ? (
-          <div style={styles.featureCard}>
-            <div style={styles.featureIcon}>🤍</div>
-            <h3 style={styles.featureTitle}>No Favorites Yet</h3>
-            <p style={styles.featureDescription}>
-              Start exploring businesses and add your favorites to see them here.
-            </p>
-            <button style={{...styles.button, ...styles.primaryButton}} onClick={() => navigateToView('businesses')}>
-              🔍 Find Businesses
-            </button>
-          </div>
-        ) : (
-          favoriteBusinesses.map(business => (
-            <div key={business.id} style={styles.businessCard}>
-              {business.image && (
-                <img 
-                  src={business.image} 
-                  alt={business.name}
-                  style={styles.businessImage}
-                  onError={(e) => {e.target.style.display='none';}}
-                />
-              )}
-              
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                <h3 style={styles.businessName}>{business.name}</h3>
-                <span style={{
-                  ...styles.businessTypeIndicator,
-                  ...(business.businessType === 'physical' ? styles.physicalBadge :
-                      business.businessType === 'online' ? styles.onlineBadge :
-                      styles.mobileBadge)
-                }}>
-                  {business.businessType === 'physical' ? '🏢' :
-                   business.businessType === 'online' ? '🌐' :
-                   '🚐'}
-                </span>
-              </div>
-              
-              <span style={styles.businessType}>{business.type}</span>
-              <p style={styles.businessDescription}>{business.description}</p>
-              
-              <div style={styles.rating}>
-                ⭐⭐⭐⭐⭐ {business.rating}
-                {business.verificationSubmitted && (
-                  <span style={styles.verifiedBadge}>
-                    🏆 Verified Business
-                  </span>
-                )}
-              </div>
-              
-              <AddressDisplay business={business} />
-              
-              <div style={styles.businessInfo}>📞 {business.phone}</div>
-              {business.hours && <div style={styles.businessInfo}>🕒 {business.hours}</div>}
-              {business.website && (
-                <div style={styles.businessInfo}>
-                  🌐 <a href={business.website} target="_blank" rel="noopener noreferrer" style={{color: '#ea580c'}}>{business.website}</a>
-                </div>
-              )}
-              
-              <button 
-                style={{
-                  ...styles.button,
-                  background: '#ef4444',
-                  color: 'white',
-                  width: '100%',
-                  marginTop: '12px'
-                }}
-                onClick={() => toggleFavorite(business.id)}
-              >
-                ❤️ Remove from Favorites
-              </button>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-
-  // Main render logic
-  const renderCurrentView = () => {
-    if (currentView === 'admin') {
-      return isAdminAuthenticated ? renderAdminPanel() : renderAdminLogin();
-    }
-
-    switch (currentView) {
-      case 'businesses':
-        return renderBusinessListings();
-      case 'favorites':
-        return renderFavorites();
-      case 'profile':
-        return renderProfile();
-      default:
-        return renderLandingPage();
-    }
+    );
   };
 
-  return (
-    <>
-      {renderCurrentView()}
-      
-      {/* Bottom Navigation */}
-      <div style={styles.bottomNav}>
-        <button 
-          style={{...styles.navButton, ...(currentView === 'landing' ? styles.activeNavButton : {})}}
-          onClick={() => navigateToView('landing')}
-        >
-          <div style={{fontSize: '20px', marginBottom: '4px'}}>🏠</div>
-          Home
-        </button>
-        <button 
-          style={{...styles.navButton, ...(currentView === 'businesses' ? styles.activeNavButton : {})}}
-          onClick={() => navigateToView('businesses')}
-        >
-          <div style={{fontSize: '20px', marginBottom: '4px'}}>🔍</div>
-          Search
-        </button>
-        <button 
-          style={{...styles.navButton, ...(currentView === 'favorites' ? styles.activeNavButton : {})}}
-          onClick={() => navigateToView('favorites')}
-        >
-          <div style={{fontSize: '20px', marginBottom: '4px'}}>❤️</div>
-          Favorites
-        </button>
-        <button 
-          style={{...styles.navButton, ...(currentView === 'profile' ? styles.activeNavButton : {})}}
-          onClick={() => navigateToView('profile')}
-        >
-          <div style={{fontSize: '20px', marginBottom: '4px'}}>👤</div>
-          Profile
-        </button>
+  // Landing Page
+  if (currentView === 'landing') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900">
+        {/* Header */}
+        <header className="bg-black bg-opacity-20 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div 
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={handleLogoClick}
+            >
+              <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-black font-bold text-lg">M</span>
+              </div>
+              <h1 className="text-2xl font-bold text-white">Melanin Market</h1>
+            </div>
+            <nav className="flex gap-6">
+              <button 
+                onClick={() => setCurrentView('directory')}
+                className="text-white hover:text-yellow-400 transition-colors"
+              >
+                Browse Businesses
+              </button>
+              <button 
+                onClick={() => setCurrentView('submit')}
+                className="bg-yellow-400 text-black px-4 py-2 rounded-lg font-medium hover:bg-yellow-300 transition-colors"
+              >
+                Add Your Business
+              </button>
+            </nav>
+          </div>
+        </header>
+
+        {/* Hero Section */}
+        <main className="max-w-7xl mx-auto px-4 py-20 text-center">
+          <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
+            Discover & Support
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+              Minority-Owned Businesses
+            </span>
+          </h2>
+          <p className="text-xl text-purple-100 mb-8 max-w-3xl mx-auto">
+            Connect with authentic businesses owned by Black, Latino, Asian, Native American, and other minority entrepreneurs in your community and beyond.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <button 
+              onClick={() => setCurrentView('directory')}
+              className="bg-white text-purple-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-colors"
+            >
+              Explore Directory
+            </button>
+            <button 
+              onClick={() => setCurrentView('submit')}
+              className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white hover:text-purple-900 transition-colors"
+            >
+              List Your Business
+            </button>
+          </div>
+
+          {/* Features */}
+          <div className="grid md:grid-cols-3 gap-8 mt-20">
+            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6">
+              <div className="text-4xl mb-4">🏪</div>
+              <h3 className="text-xl font-bold text-white mb-2">Discover Local Gems</h3>
+              <p className="text-purple-100">Find amazing minority-owned businesses in your area and across the nation.</p>
+            </div>
+            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6">
+              <div className="text-4xl mb-4">✅</div>
+              <h3 className="text-xl font-bold text-white mb-2">Verified Businesses</h3>
+              <p className="text-purple-100">All businesses are verified to ensure authentic minority ownership.</p>
+            </div>
+            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-6">
+              <div className="text-4xl mb-4">🤝</div>
+              <h3 className="text-xl font-bold text-white mb-2">Support Community</h3>
+              <p className="text-purple-100">Every purchase helps strengthen minority-owned businesses and communities.</p>
+            </div>
+          </div>
+        </main>
       </div>
-    </>
-  );
+    );
+  }
+
+  // Business Directory
+  if (currentView === 'directory') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div 
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => setCurrentView('landing')}
+            >
+              <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-black font-bold text-lg">M</span>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Melanin Market</h1>
+            </div>
+            <nav className="flex gap-6">
+              <button 
+                onClick={() => setCurrentView('landing')}
+                className="text-gray-600 hover:text-purple-600 transition-colors"
+              >
+                Home
+              </button>
+              <button 
+                onClick={() => setCurrentView('submit')}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+              >
+                Add Your Business
+              </button>
+            </nav>
+          </div>
+        </header>
+
+        {/* Search and Filters */}
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Search businesses, locations, or services..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+              <div className="md:w-48">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Business Grid */}
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading businesses...</p>
+            </div>
+          ) : filteredBusinesses.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg">No businesses found matching your criteria.</p>
+              <button 
+                onClick={() => {
+                  setSearchInput('');
+                  setSelectedCategory('All');
+                }}
+                className="mt-4 text-purple-600 hover:text-purple-700"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredBusinesses.map(business => (
+                <div key={business.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="relative">
+                    <img 
+                      src={business.image} 
+                      alt={business.name}
+                      className="w-full h-48 object-cover"
+                      onError={(e) => {
+                        e.target.src = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=200&fit=crop';
+                      }}
+                    />
+                    <button
+                      onClick={() => toggleFavorite(business.id)}
+                      className={`absolute top-3 right-3 p-2 rounded-full ${
+                        favorites.includes(business.id) 
+                          ? 'bg-red-500 text-white' 
+                          : 'bg-white text-gray-600'
+                      } hover:scale-110 transition-transform`}
+                    >
+                      ❤️
+                    </button>
+                    {business.verified && (
+                      <div className="absolute top-3 left-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                        ✓ Verified
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-bold text-lg text-gray-900">{business.name}</h3>
+                      <span className="text-sm text-purple-600 font-medium">{business.owner}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
+                        {business.type}
+                      </span>
+                      {business.businessType === 'online' && (
+                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                          Online
+                        </span>
+                      )}
+                    </div>
+                    
+                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">{business.description}</p>
+                    
+                    <div className="space-y-1 text-sm text-gray-500">
+                      {business.businessType === 'physical' ? (
+                        <div 
+                          className="flex items-center gap-1 cursor-pointer hover:text-purple-600"
+                          onClick={() => handleAddressClick(business)}
+                        >
+                          <span>📍</span>
+                          <span>{business.address}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <span>🌐</span>
+                          <span>Service Area: {business.serviceArea}</span>
+                        </div>
+                      )}
+                      
+                      {business.phone && (
+                        <div className="flex items-center gap-1">
+                          <span>📞</span>
+                          <a href={`tel:${business.phone}`} className="hover:text-purple-600">
+                            {business.phone}
+                          </a>
+                        </div>
+                      )}
+                      
+                      {business.website && (
+                        <div className="flex items-center gap-1">
+                          <span>🌐</span>
+                          <a 
+                            href={business.website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="hover:text-purple-600 truncate"
+                          >
+                            Visit Website
+                          </a>
+                        </div>
+                      )}
+                      
+                      {business.hours && (
+                        <div className="flex items-center gap-1">
+                          <span>🕒</span>
+                          <span>{business.hours}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {business.rating && (
+                      <div className="mt-3 pt-3 border-t">
+                        <div className="flex items-center gap-1">
+                          <span className="text-yellow-500">⭐</span>
+                          <span className="font-medium">{business.rating}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  // Business Submission Form
+  if (currentView === 'submit') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div 
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => setCurrentView('landing')}
+            >
+              <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-black font-bold text-lg">M</span>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Melanin Market</h1>
+            </div>
+            <nav className="flex gap-6">
+              <button 
+                onClick={() => setCurrentView('landing')}
+                className="text-gray-600 hover:text-purple-600 transition-colors"
+              >
+                Home
+              </button>
+              <button 
+                onClick={() => setCurrentView('directory')}
+                className="text-gray-600 hover:text-purple-600 transition-colors"
+              >
+                Browse Businesses
+              </button>
+            </nav>
+          </div>
+        </header>
+
+        {/* Form */}
+        <main className="max-w-3xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow-md p-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Add Your Business</h2>
+            <p className="text-gray-600 mb-8">
+              Join our community of minority-owned businesses and reach customers who value diversity and authentic entrepreneurship.
+            </p>
+
+            <form onSubmit={handleBusinessSubmit} className="space-y-6">
+              {/* Business Type Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Business Type *
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="businessLocationType"
+                      value="physical"
+                      checked={businessLocationType === 'physical'}
+                      onChange={(e) => setBusinessLocationType(e.target.value)}
+                      className="mr-2"
+                      required
+                    />
+                    Physical Location (Store, Restaurant, Office, etc.)
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="businessLocationType"
+                      value="online"
+                      checked={businessLocationType === 'online'}
+                      onChange={(e) => setBusinessLocationType(e.target.value)}
+                      className="mr-2"
+                      required
+                    />
+                    Online/Digital Business
+                  </label>
+                </div>
+              </div>
+
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Business Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="businessName"
+                    required
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Your Business Name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Business Category *
+                  </label>
+                  <select
+                    name="businessCategory"
+                    required
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="">Select Category</option>
+                    <option value="Restaurant">Restaurant & Food</option>
+                    <option value="Retail">Retail & Shopping</option>
+                    <option value="Technology">Technology & Software</option>
+                    <option value="Healthcare">Healthcare & Medical</option>
+                    <option value="Beauty">Beauty & Wellness</option>
+                    <option value="Professional Services">Professional Services</option>
+                    <option value="Entertainment">Entertainment & Events</option>
+                    <option value="Education">Education & Training</option>
+                    <option value="Automotive">Automotive</option>
+                    <option value="Real Estate">Real Estate</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Owner Ethnicity *
+                </label>
+                <select
+                  name="ownerEthnicity"
+                  required
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="">Select Owner Ethnicity</option>
+                  <option value="Black-owned">Black-owned</option>
+                  <option value="Latino-owned">Latino/Hispanic-owned</option>
+                  <option value="Asian-owned">Asian-owned</option>
+                  <option value="Native American-owned">Native American-owned</option>
+                  <option value="Multi-ethnic">Multi-ethnic</option>
+                  <option value="Other">Other Minority-owned</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Business Description *
+                </label>
+                <textarea
+                  name="businessDescription"
+                  required
+                  rows="4"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="Describe your business, services, and what makes it special..."
+                />
+              </div>
+
+              {/* Location Information */}
+              {businessLocationType === 'physical' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Business Address *
+                  </label>
+                  <input
+                    type="text"
+                    name="businessAddress"
+                    required={businessLocationType === 'physical'}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="123 Main Street, Suite 100"
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    City *
+                  </label>
+                  <input
+                    type="text"
+                    name="businessCity"
+                    required
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="City"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    State *
+                  </label>
+                  <select
+                    name="businessState"
+                    required
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    {US_STATES.map(state => (
+                      <option key={state.value} value={state.value}>
+                        {state.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {businessLocationType === 'online' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Service Area
+                  </label>
+                  <input
+                    type="text"
+                    name="serviceArea"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="e.g., Nationwide, Regional, Specific States"
+                  />
+                </div>
+              )}
+
+              {/* Contact Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    name="businessPhone"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    name="businessEmail"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="contact@yourbusiness.com"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Website
+                  </label>
+                  <input
+                    type="url"
+                    name="businessWebsite"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="https://yourbusiness.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Business Hours
+                  </label>
+                  <input
+                    type="text"
+                    name="businessHours"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Mon-Fri: 9AM-5PM"
+                  />
+                </div>
+              </div>
+
+              {/* Verification Section */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  Business Verification (Optional but Recommended)
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Providing verification helps build trust with customers and may qualify your business for a verified badge.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Verification Method
+                    </label>
+                    <select
+                      name="verificationMethod"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    >
+                      <option value="">Select Method (Optional)</option>
+                      <option value="business-license">Business License</option>
+                      <option value="ein">EIN (Employer Identification Number)</option>
+                      <option value="website">Official Website</option>
+                      <option value="social-media">Social Media Verification</option>
+                      <option value="other">Other Documentation</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Verification Details
+                    </label>
+                    <input
+                      type="text"
+                      name="verificationDetails"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="License number, EIN, URL, etc."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-6">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Business for Review'}
+                </button>
+                <p className="text-sm text-gray-500 mt-2 text-center">
+                  Your business will be reviewed within 24-48 hours before being added to the directory.
+                </p>
+              </div>
+            </form>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Admin Panel
+  if (currentView === 'admin') {
+    if (!isAdminAuthenticated) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+            <h2 className="text-2xl font-bold text-center mb-6">Admin Access</h2>
+            <form onSubmit={handleAdminLogin}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Admin Password
+                </label>
+                <input
+                  type="password"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-purple-600 text-white py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+              >
+                Login
+              </button>
+            </form>
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => setCurrentView('landing')}
+                className="text-gray-600 hover:text-purple-600"
+              >
+                Back to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-black font-bold text-lg">M</span>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setCurrentView('landing')}
+                className="text-gray-600 hover:text-purple-600 transition-colors"
+              >
+                View Site
+              </button>
+              <button
+                onClick={handleAdminLogout}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Manage Businesses</h2>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Add New Business
+            </button>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading businesses...</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Business
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Location
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {businesses.map(business => (
+                    <tr key={business.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <img 
+                            className="h-10 w-10 rounded-full object-cover" 
+                            src={business.image} 
+                            alt={business.name}
+                            onError={(e) => {
+                              e.target.src = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=40&h=40&fit=crop';
+                            }}
+                          />
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{business.name}</div>
+                            <div className="text-sm text-gray-500">{business.owner}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                          {business.type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {business.businessType === 'physical' ? `${business.city}, ${business.state}` : 'Online'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          {business.verified && (
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                              Verified
+                            </span>
+                          )}
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {business.status || 'Active'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setEditingBusiness(business)}
+                            className="text-indigo-600 hover:text-indigo-900"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBusiness(business.id)}
+                            className="text-red-600 hover:text-red-900"
+                            disabled={isUpdatingGitHub}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </main>
+
+        {/* Add/Edit Business Modal */}
+        {(showAddForm || editingBusiness) && (
+          <BusinessForm
+            business={editingBusiness}
+            onSubmit={editingBusiness ? handleEditBusiness : handleAddBusiness}
+            onCancel={() => {
+              setShowAddForm(false);
+              setEditingBusiness(null);
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  return null;
 }
 
 export default App;
-
