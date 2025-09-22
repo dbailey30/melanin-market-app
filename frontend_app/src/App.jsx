@@ -29,14 +29,8 @@ function App() {
     PUBLIC_KEY: 'jv0z8LO2xSTdzuvDz'
   };
 
-  // GitHub API Configuration - These will be environment variables in production
-  const GITHUB_CONFIG = {
-    OWNER: process.env.REACT_APP_GITHUB_OWNER || 'dbailey30',
-    REPO: process.env.REACT_APP_GITHUB_REPO || 'melanin-market-app',
-    BRANCH: process.env.REACT_APP_GITHUB_BRANCH || 'main',
-    TOKEN: process.env.REACT_APP_GITHUB_TOKEN || '', // Set this in Vercel environment variables
-    FILE_PATH: 'frontend_app/public/businesses.json'
-  };
+  // GitHub integration now handled securely via API endpoints
+  // No client-side configuration needed
 
   // All US States and Territories
   const US_STATES = [
@@ -97,71 +91,53 @@ function App() {
 
   // GitHub API Functions
   const fetchBusinessesFromGitHub = async () => {
+    try {
     if (!GITHUB_CONFIG.TOKEN) {
       console.warn('GitHub token not configured, using local data');
       return null;
     }
 
     try {
-      const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.OWNER}/${GITHUB_CONFIG.REPO}/contents/${GITHUB_CONFIG.FILE_PATH}`, {
-        headers: {
-          'Authorization': `token ${GITHUB_CONFIG.TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.status}`);
-      }
-
+      const response = await fetch('/api/businesses');
       const data = await response.json();
-      const content = atob(data.content);
-      const businesses = JSON.parse(content);
-      
-      return { businesses, sha: data.sha };
+
+      if (data.success) {
+        return { businesses: data.businesses, sha: data.sha };
+      } else {
+        console.warn( 'Github API not available, using local data');
+        return null;
+      }
     } catch (error) {
-      console.error('Error fetching from GitHub:', error);
+      console.error('Error fetching from secure API:', error);
       return null;
     }
   };
 
   const updateBusinessesInGitHub = async (businesses, action, businessName) => {
-    if (!GITHUB_CONFIG.TOKEN) {
-      throw new Error('GitHub token not configured');
-    }
-
     try {
-      // First, get the current file to get the SHA
-      const currentFile = await fetchBusinessesFromGitHub();
-      if (!currentFile) {
-        throw new Error('Could not fetch current file from GitHub');
-      }
-
-      const content = btoa(JSON.stringify(businesses, null, 2));
-      
-      const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.OWNER}/${GITHUB_CONFIG.REPO}/contents/${GITHUB_CONFIG.FILE_PATH}`, {
+      const response = await fetch('/api/businesses', {
         method: 'PUT',
         headers: {
-          'Authorization': `token ${GITHUB_CONFIG.TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: `Update businesses.json - ${action} business: ${businessName}`,
-          content: content,
-          sha: currentFile.sha,
-          branch: GITHUB_CONFIG.BRANCH
+          adminAuth: ADMIN_PASSWORD,
+          businesses: businesses,
+          action: action,
+          businessesName: businessName
         })
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`GitHub API error: ${errorData.message}`);
+        throw new Error(data.message || 'Failed to update businesses');
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error updating GitHub:', error);
+      console.error('Error updating via secure API:', error);
       throw error;
     }
   };
@@ -196,7 +172,7 @@ function App() {
     const loadBusinesses = async () => {
       try {
         // Try to load from GitHub first (for admin users)
-        if (GITHUB_CONFIG.TOKEN && isAdminAuthenticated) {
+        if (isAdminAuthenticated) {
           const githubData = await fetchBusinessesFromGitHub();
           if (githubData) {
             setBusinesses(githubData.businesses);
