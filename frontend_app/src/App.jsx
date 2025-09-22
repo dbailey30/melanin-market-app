@@ -92,12 +92,6 @@ function App() {
   // GitHub API Functions
   const fetchBusinessesFromGitHub = async () => {
     try {
-    if (!GITHUB_CONFIG.TOKEN) {
-      console.warn('GitHub token not configured, using local data');
-      return null;
-    }
-
-    try {
       const response = await fetch('/api/businesses');
       const data = await response.json();
 
@@ -124,18 +118,17 @@ function App() {
           adminAuth: ADMIN_PASSWORD,
           businesses: businesses,
           action: action,
-          businessesName: businessName
+          businessName: businessName
         })
       });
 
       const data = await response.json();
       
       if (!response.ok) {
-        const errorData = await response.json();
         throw new Error(data.message || 'Failed to update businesses');
       }
 
-      return await response.json();
+      return data;
     } catch (error) {
       console.error('Error updating via secure API:', error);
       throw error;
@@ -283,7 +276,7 @@ function App() {
     setShowAddForm(false);
   };
 
-  // Business management functions with GitHub integration
+  // Business Management Functions - Replace the ones that reference GITHUB_CONFIG
   const handleAddBusiness = async (businessData) => {
     setIsUpdatingGitHub(true);
     
@@ -298,12 +291,12 @@ function App() {
       
       const updatedBusinesses = [...businesses, newBusiness];
       
-      // Update GitHub if token is available
-      if (GITHUB_CONFIG.TOKEN) {
+      // Try to update via secure API
+      try {
         await updateBusinessesInGitHub(updatedBusinesses, 'Add', newBusiness.name);
         alert(`✅ Business "${newBusiness.name}" added successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
-      } else {
-        alert(`✅ Business "${newBusiness.name}" added successfully!\n\n⚠️ Note: GitHub integration not configured. Changes are temporary until you manually update businesses.json`);
+      } catch (error) {
+        alert(`✅ Business "${newBusiness.name}" added successfully!\n\n⚠️ GitHub update failed: ${error.message}\nChanges are temporary until Github sync is restored.`);
       }
       
       setBusinesses(updatedBusinesses);
@@ -311,7 +304,7 @@ function App() {
       
     } catch (error) {
       console.error('Error adding business:', error);
-      alert(`❌ Error adding business: ${error.message}\n\nThe business was added locally but could not be saved to GitHub. Please try again or contact support.`);
+      alert(`❌ Error adding business: ${error.message}\n\nPlease try again or contact support.`);
     } finally {
       setIsUpdatingGitHub(false);
     }
@@ -325,12 +318,12 @@ function App() {
         b.id === editingBusiness.id ? { ...businessData, id: editingBusiness.id } : b
       );
       
-      // Update GitHub if token is available
-      if (GITHUB_CONFIG.TOKEN) {
+      // Try to update via secure API
+      try {
         await updateBusinessesInGitHub(updatedBusinesses, 'Edit', businessData.name);
         alert(`✅ Business "${businessData.name}" updated successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
-      } else {
-        alert(`✅ Business "${businessData.name}" updated successfully!\n\n⚠️ Note: GitHub integration not configured. Changes are temporary until you manually update businesses.json`);
+      } catch (error) {
+        alert(`✅ Business "${businessData.name}" updated successfully!\n\n⚠️ GitHub update failed: ${error.message}\nChanges are temporary until Github sync is restored.');
       }
       
       setBusinesses(updatedBusinesses);
@@ -338,7 +331,7 @@ function App() {
       
     } catch (error) {
       console.error('Error editing business:', error);
-      alert(`❌ Error updating business: ${error.message}\n\nThe business was updated locally but could not be saved to GitHub. Please try again or contact support.`);
+      alert(`❌ Error updating business: ${error.message}\n\nPlease try again or contact support.`);
     } finally {
       setIsUpdatingGitHub(false);
     }
@@ -354,19 +347,20 @@ function App() {
       try {
         const updatedBusinesses = businesses.filter(b => b.id !== businessId);
         
-        // Update GitHub if token is available
-        if (GITHUB_CONFIG.TOKEN) {
+        // Try to update via secure API
+        try {
           await updateBusinessesInGitHub(updatedBusinesses, 'Delete', businessToDelete.name);
           alert(`✅ Business "${businessToDelete.name}" deleted successfully!\n\n🚀 GitHub updated automatically\n⏱️ Changes will be live in 2-3 minutes after Vercel redeploys`);
-        } else {
-          alert(`✅ Business "${businessToDelete.name}" deleted successfully!\n\n⚠️ Note: GitHub integration not configured. Changes are temporary until you manually update businesses.json`);
+        } catch (error) {
+          console.error('Github update failed:', error);
+          alert(`✅ Business "${businessToDelete.name}" deleted successfully!\n\n⚠️ GitHub update failed: ${error.message}\nChanges are temporary until Github sync is restored.`);
         }
         
         setBusinesses(updatedBusinesses);
         
       } catch (error) {
         console.error('Error deleting business:', error);
-        alert(`❌ Error deleting business: ${error.message}\n\nThe business was removed locally but could not be deleted from GitHub. Please try again or contact support.`);
+        alert(`❌ Error deleting business: ${error.message}\n\nPlease try again or contact support.`);
       } finally {
         setIsUpdatingGitHub(false);
       }
