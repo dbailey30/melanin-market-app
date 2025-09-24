@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
+import './App.css';
 
 function App() {
   const [currentView, setCurrentView] = useState('landing');
