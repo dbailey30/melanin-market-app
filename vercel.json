@@ -1,16 +1,13 @@
 {
   "functions": {
-    "api/businesses.js": {
-      "maxDuration": 30
-    },
-    "api/github-status.js": {
-      "maxDuration": 10
+    "api/*.js": {
+      "runtime": "@vercel/node"
     }
   },
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/((?!api).*)",
+      "destination": "/frontend_app/$1"
     }
   ],
   "headers": [
