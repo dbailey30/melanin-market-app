@@ -1,12 +1,4 @@
 {
-  "functions": {
-    "api/businesses.js": {
-      "runtime": "nodejs18.x"
-    },
-    "api/github-status.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/((?!api).*)",
