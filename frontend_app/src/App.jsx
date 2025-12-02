@@ -304,7 +304,7 @@ function App() {
   // Handle contact form submission
   const handleContactSubmit = (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+    const _formData = new FormData(e.target);
     
     emailjs.sendForm('service_your_id', 'template_your_id', e.target, 'your_public_key')
       .then(() => {
