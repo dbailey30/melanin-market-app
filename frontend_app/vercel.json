@@ -1,7 +1,4 @@
 {
-  "installCommand": "cd frontend_app && npm install",
-  "buildCommand": "cd frontend_app && npm run build",
-  "outputDirectory": "frontend_app/build",
   "rewrites": [
     {
       "source": "/api/(.*)",
