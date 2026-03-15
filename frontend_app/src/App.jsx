@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
-import { createClient } from '@supabase/supabase-js';
 import './App.css';
-
-// Initialize Supabase client
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'your-anon-key';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Admin password for business management
 const ADMIN_PASSWORD = 'melanin2025admin';
@@ -24,7 +18,7 @@ function App() {
   const [adminPassword, setAdminPassword] = useState('');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [supabaseStatus, setSupabaseStatus] = useState('checking');
+  const [apiStatus, setApiStatus] = useState('checking');
 
   // Business form states
   const [businessForm, setBusinessForm] = useState({
@@ -64,87 +58,105 @@ function App() {
   // Business types
   const businessTypes = ['All', 'physical', 'online', 'mobile'];
 
-  // Load businesses from Supabase
+  // Load businesses from GitHub via Vercel serverless API
   const loadBusinesses = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('businesses')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const response = await fetch('/api/businesses', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
 
-      if (error) {
-        console.error('Error loading businesses:', error);
-        setSupabaseStatus('error');
+      if (!response.ok) {
+        const err = await response.json();
+        console.error('Error loading businesses:', err);
+        setApiStatus('error');
         return;
       }
 
-      setBusinesses(data || []);
-      setSupabaseStatus('connected');
+      const data = await response.json();
+      // API returns: { success: true, businesses: [...], sha: "...", lastUpdated: "..." }
+      setBusinesses(data.businesses || []);
+      setApiStatus('connected');
     } catch (error) {
-      console.error('Error connecting to Supabase:', error);
-      setSupabaseStatus('error');
+      console.error('Error connecting to businesses API:', error);
+      setApiStatus('error');
     } finally {
       setLoading(false);
     }
   };
 
-  // Add new business to Supabase
+  // Add new business to GitHub via Vercel serverless API
   const addBusiness = async (businessData) => {
     try {
-      const { data, error } = await supabase
-        .from('businesses')
-        .insert([businessData])
-        .select();
+      const response = await fetch('/api/businesses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminAuth: ADMIN_PASSWORD,
+          businessData: businessData,
+        }),
+      });
 
-      if (error) {
-        throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || result.message || 'Unknown error' };
       }
 
-      // Reload businesses to get the latest data
       await loadBusinesses();
-      return { success: true, data };
+      return { success: true, data: result.business };
     } catch (error) {
       console.error('Error adding business:', error);
       return { success: false, error: error.message };
     }
   };
 
-  // Update business in Supabase
+  // Update existing business in GitHub via Vercel serverless API
   const updateBusiness = async (id, businessData) => {
     try {
-      const { data, error } = await supabase
-        .from('businesses')
-        .update({ ...businessData, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select();
+      const response = await fetch('/api/businesses', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminAuth: ADMIN_PASSWORD,
+          businessId: id,
+          businessData: businessData,
+        }),
+      });
 
-      if (error) {
-        throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || result.message || 'Unknown error' };
       }
 
-      // Reload businesses to get the latest data
       await loadBusinesses();
-      return { success: true, data };
+      return { success: true, data: result.business };
     } catch (error) {
       console.error('Error updating business:', error);
       return { success: false, error: error.message };
     }
   };
 
-  // Delete business from Supabase
+  // Delete business from GitHub via Vercel serverless API
   const deleteBusiness = async (id) => {
     try {
-      const { error } = await supabase
-        .from('businesses')
-        .delete()
-        .eq('id', id);
+      const response = await fetch('/api/businesses', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminAuth: ADMIN_PASSWORD,
+          businessId: id,
+        }),
+      });
 
-      if (error) {
-        throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || result.message || 'Unknown error' };
       }
 
-      // Reload businesses to get the latest data
       await loadBusinesses();
       return { success: true };
     } catch (error) {
@@ -362,16 +374,16 @@ function App() {
               </div>
             </div>
             
-            {/* Database Status */}
+            {/* API Status Indicator */}
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <div className={`w-3 h-3 rounded-full ${
-                  supabaseStatus === 'connected' ? 'bg-green-400' : 
-                  supabaseStatus === 'error' ? 'bg-red-400' : 'bg-yellow-400'
+                  apiStatus === 'connected' ? 'bg-green-400' : 
+                  apiStatus === 'error' ? 'bg-red-400' : 'bg-yellow-400'
                 }`}></div>
                 <span className="text-sm">
-                  Database: {supabaseStatus === 'connected' ? 'Connected' : 
-                           supabaseStatus === 'error' ? 'Error' : 'Checking...'}
+                  Database: {apiStatus === 'connected' ? 'Connected' : 
+                           apiStatus === 'error' ? 'Error' : 'Checking...'}
                 </span>
               </div>
               
@@ -433,7 +445,7 @@ function App() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-green-800">Business Management</h2>
-                <p className="text-green-600">Database: {supabaseStatus === 'connected' ? 'CONNECTED' : 'ERROR'} • Real-time updates enabled</p>
+                <p className="text-green-600">GitHub API: {apiStatus === 'connected' ? 'CONNECTED' : 'ERROR'} • Changes saved directly to repository</p>
               </div>
               <div className="flex space-x-4">
                 <button
@@ -940,7 +952,7 @@ function App() {
           <div className="text-sm text-gray-500">
             <p>© 2024 Melanin Market. All rights reserved.</p>
             <p className="mt-2">
-              Powered by Supabase • {businesses.length} businesses and growing
+              Powered by GitHub • {businesses.length} businesses and growing
             </p>
           </div>
         </div>
@@ -950,5 +962,3 @@ function App() {
 }
 
 export default App;
-
-
