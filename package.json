@@ -1,0 +1,10 @@
+{
+  "name": "melanin-market-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install": "cd frontend_app && npm install",
+    "build": "cd frontend_app && npm run build",
+    "start": "cd frontend_app && npm start"
+  }
+}
