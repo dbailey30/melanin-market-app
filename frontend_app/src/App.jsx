@@ -19,6 +19,7 @@ function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [apiStatus, setApiStatus] = useState('checking');
+  const [citySearch, setCitySearch] = useState('');
 
   // Business form states
   const [businessForm, setBusinessForm] = useState({
@@ -75,7 +76,6 @@ function App() {
       }
 
       const data = await response.json();
-      // API returns: { success: true, businesses: [...], sha: "...", lastUpdated: "..." }
       setBusinesses(data.businesses || []);
       setApiStatus('connected');
     } catch (error) {
@@ -86,7 +86,7 @@ function App() {
     }
   };
 
-  // Add new business to GitHub via Vercel serverless API
+  // Add new business
   const addBusiness = async (businessData) => {
     try {
       const response = await fetch('/api/businesses', {
@@ -97,13 +97,10 @@ function App() {
           businessData: businessData,
         }),
       });
-
       const result = await response.json();
-
       if (!response.ok) {
         return { success: false, error: result.error || result.message || 'Unknown error' };
       }
-
       await loadBusinesses();
       return { success: true, data: result.business };
     } catch (error) {
@@ -112,7 +109,7 @@ function App() {
     }
   };
 
-  // Update existing business in GitHub via Vercel serverless API
+  // Update existing business
   const updateBusiness = async (id, businessData) => {
     try {
       const response = await fetch('/api/businesses', {
@@ -124,13 +121,10 @@ function App() {
           businessData: businessData,
         }),
       });
-
       const result = await response.json();
-
       if (!response.ok) {
         return { success: false, error: result.error || result.message || 'Unknown error' };
       }
-
       await loadBusinesses();
       return { success: true, data: result.business };
     } catch (error) {
@@ -139,7 +133,7 @@ function App() {
     }
   };
 
-  // Delete business from GitHub via Vercel serverless API
+  // Delete business
   const deleteBusiness = async (id) => {
     try {
       const response = await fetch('/api/businesses', {
@@ -150,13 +144,10 @@ function App() {
           businessId: id,
         }),
       });
-
       const result = await response.json();
-
       if (!response.ok) {
         return { success: false, error: result.error || result.message || 'Unknown error' };
       }
-
       await loadBusinesses();
       return { success: true };
     } catch (error) {
@@ -165,18 +156,16 @@ function App() {
     }
   };
 
-  // Load businesses on component mount
+  // Load businesses on mount
   useEffect(() => {
     loadBusinesses();
-    
-    // Load favorites from localStorage
     const savedFavorites = localStorage.getItem('melanin-market-favorites');
     if (savedFavorites) {
       setFavorites(JSON.parse(savedFavorites));
     }
   }, []);
 
-  // Filter businesses based on search and filters
+  // Filter businesses
   useEffect(() => {
     let filtered = businesses;
 
@@ -185,6 +174,13 @@ function App() {
         business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         business.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         business.city.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (citySearch) {
+      filtered = filtered.filter(business =>
+        business.city.toLowerCase().includes(citySearch.toLowerCase()) ||
+        business.state.toLowerCase().includes(citySearch.toLowerCase())
       );
     }
 
@@ -205,9 +201,8 @@ function App() {
     }
 
     setFilteredBusinesses(filtered);
-  }, [businesses, searchTerm, selectedCategory, selectedState, selectedBusinessType, currentView, favorites]);
+  }, [businesses, searchTerm, citySearch, selectedCategory, selectedState, selectedBusinessType, currentView, favorites]);
 
-  // Handle admin authentication
   const handleAdminLogin = () => {
     if (adminPassword === ADMIN_PASSWORD) {
       setIsAdminAuthenticated(true);
@@ -218,19 +213,15 @@ function App() {
     }
   };
 
-  // Handle admin logout
   const handleAdminLogout = () => {
     setIsAdminAuthenticated(false);
     setShowAdminPanel(false);
     setCurrentView('home');
   };
 
-  // Handle business form submission
   const handleBusinessSubmit = async (e) => {
     e.preventDefault();
-    
     if (editingBusiness) {
-      // Update existing business
       const result = await updateBusiness(editingBusiness.id, businessForm);
       if (result.success) {
         alert('Business updated successfully!');
@@ -241,7 +232,6 @@ function App() {
         alert(`Error updating business: ${result.error}`);
       }
     } else {
-      // Add new business
       const result = await addBusiness(businessForm);
       if (result.success) {
         alert('Business added successfully!');
@@ -253,7 +243,6 @@ function App() {
     }
   };
 
-  // Handle business deletion
   const handleDeleteBusiness = async (business) => {
     if (window.confirm(`Are you sure you want to delete "${business.name}"?`)) {
       const result = await deleteBusiness(business.id);
@@ -265,7 +254,6 @@ function App() {
     }
   };
 
-  // Handle business editing
   const handleEditBusiness = (business) => {
     setBusinessForm({
       name: business.name,
@@ -285,7 +273,6 @@ function App() {
     setShowBusinessForm(true);
   };
 
-  // Reset business form
   const resetBusinessForm = () => {
     setBusinessForm({
       name: '',
@@ -303,17 +290,14 @@ function App() {
     });
   };
 
-  // Handle favorites
   const toggleFavorite = (businessId) => {
     const newFavorites = favorites.includes(businessId)
       ? favorites.filter(id => id !== businessId)
       : [...favorites, businessId];
-    
     setFavorites(newFavorites);
     localStorage.setItem('melanin-market-favorites', JSON.stringify(newFavorites));
   };
 
-  // Handle contact form submission
   const handleContactSubmit = (e) => {
     e.preventDefault();
     emailjs.sendForm('service_your_id', 'template_your_id', e.target, 'your_public_key')
@@ -327,7 +311,6 @@ function App() {
       });
   };
 
-  // Get business type display name
   const getBusinessTypeDisplay = (type) => {
     switch (type) {
       case 'physical': return '🏢 Physical';
@@ -337,7 +320,6 @@ function App() {
     }
   };
 
-  // Get verification badge
   const getVerificationBadge = (status) => {
     if (status === 'verified') {
       return <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">✓ Verified</span>;
@@ -349,54 +331,52 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
-          <p className="text-amber-800">Loading businesses...</p>
+          <img src="/logo.PNG" alt="Melanin Market" className="w-16 h-16 rounded-xl mx-auto mb-4 object-contain" />
+          <p className="text-amber-800 text-lg font-medium">Loading businesses...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
-      {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 pb-20">
+
+      {/* ── HEADER ── */}
       <header className="bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <span className="text-2xl">🏪</span>
-              </div>
+            {/* Logo + Title */}
+            <div className="flex items-center space-x-3">
+              <img
+                src="/logo.PNG"
+                alt="Melanin Market Logo"
+                className="w-12 h-12 rounded-lg object-contain bg-white p-1"
+              />
               <div>
-                <h1 className="text-3xl font-bold">Melanin Market</h1>
-                <p className="text-amber-100">Supporting Black-Owned Businesses</p>
+                <h1 className="text-2xl font-extrabold tracking-wide">MELANIN MARKET</h1>
+                <p className="text-amber-100 text-xs">Discover • Support • Thrive</p>
               </div>
             </div>
-            
-            {/* API Status Indicator */}
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className={`w-3 h-3 rounded-full ${
-                  apiStatus === 'connected' ? 'bg-green-400' : 
+
+            {/* Right side: status + admin */}
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-1">
+                <div className={`w-2.5 h-2.5 rounded-full ${
+                  apiStatus === 'connected' ? 'bg-green-400' :
                   apiStatus === 'error' ? 'bg-red-400' : 'bg-yellow-400'
                 }`}></div>
-                <span className="text-sm">
-                  Database: {apiStatus === 'connected' ? 'Connected' : 
-                           apiStatus === 'error' ? 'Error' : 'Checking...'}
-                </span>
               </div>
-              
-              {/* Admin Access */}
               {!isAdminAuthenticated ? (
                 <button
                   onClick={() => setShowAdminPanel(!showAdminPanel)}
-                  className="text-sm bg-amber-700 hover:bg-amber-800 px-3 py-1 rounded transition-colors"
+                  className="text-sm bg-white text-amber-700 font-semibold px-4 py-1.5 rounded-lg hover:bg-amber-50 transition-colors"
                 >
                   Admin
                 </button>
               ) : (
                 <button
                   onClick={handleAdminLogout}
-                  className="text-sm bg-red-600 hover:bg-red-700 px-3 py-1 rounded transition-colors"
+                  className="text-sm bg-red-600 text-white px-4 py-1.5 rounded-lg hover:bg-red-700 transition-colors"
                 >
                   Logout
                 </button>
@@ -406,103 +386,116 @@ function App() {
         </div>
       </header>
 
-      {/* Admin Login Panel */}
+      {/* ── ADMIN LOGIN PANEL ── */}
       {showAdminPanel && !isAdminAuthenticated && (
         <div className="bg-amber-100 border-l-4 border-amber-500 p-4">
-          <div className="container mx-auto">
-            <div className="flex items-center space-x-4">
-              <input
-                type="password"
-                placeholder="Enter admin password"
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-                className="px-3 py-2 border border-amber-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500"
-                onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
-              />
-              <button
-                onClick={handleAdminLogin}
-                className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 transition-colors"
-              >
-                Login
-              </button>
-              <button
-                onClick={() => setShowAdminPanel(false)}
-                className="text-amber-600 hover:text-amber-800"
-              >
-                Cancel
-              </button>
-            </div>
+          <div className="container mx-auto flex items-center space-x-4">
+            <input
+              type="password"
+              placeholder="Enter admin password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              className="px-3 py-2 border border-amber-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500"
+              onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
+            />
+            <button
+              onClick={handleAdminLogin}
+              className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 transition-colors"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => setShowAdminPanel(false)}
+              className="text-amber-600 hover:text-amber-800"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
 
-      {/* Admin Panel */}
+      {/* ── ADMIN MANAGEMENT BAR ── */}
       {isAdminAuthenticated && (
         <div className="bg-green-100 border-l-4 border-green-500 p-4">
-          <div className="container mx-auto">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-green-800">Business Management</h2>
-                <p className="text-green-600">GitHub API: {apiStatus === 'connected' ? 'CONNECTED' : 'ERROR'} • Changes saved directly to repository</p>
-              </div>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => {
-                    resetBusinessForm();
-                    setEditingBusiness(null);
-                    setShowBusinessForm(true);
-                  }}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                >
-                  <span>➕</span>
-                  <span>Add New Business</span>
-                </button>
-                <button
-                  onClick={handleAdminLogout}
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
-                >
-                  Logout
-                </button>
-              </div>
+          <div className="container mx-auto flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-green-800">Business Management</h2>
+              <p className="text-green-600 text-sm">
+                GitHub API: {apiStatus === 'connected' ? 'CONNECTED' : 'ERROR'} • Changes saved directly to repository
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => { resetBusinessForm(); setEditingBusiness(null); setShowBusinessForm(true); }}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors flex items-center space-x-2"
+              >
+                <span>➕</span><span>Add New Business</span>
+              </button>
+              <button
+                onClick={handleAdminLogout}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Navigation */}
-      <nav className="bg-white shadow-md">
-        <div className="container mx-auto px-4">
-          <div className="flex space-x-8">
-            {['home', 'search', 'favorites', 'profile'].map((view) => (
-              <button
-                key={view}
-                onClick={() => setCurrentView(view)}
-                className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
-                  currentView === view
-                    ? 'border-amber-500 text-amber-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {view === 'home' && '🏠 Home'}
-                {view === 'search' && '🔍 Search'}
-                {view === 'favorites' && '❤️ Favorites'}
-                {view === 'profile' && '👤 Profile'}
-              </button>
-            ))}
-          </div>
-        </div>
-      </nav>
+      {/* ── HERO SECTION (home view only) ── */}
+      {currentView === 'home' && (
+        <section className="bg-gradient-to-b from-amber-50 to-orange-50 py-10 px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-3">
+            Discover Minority-Owned Businesses
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto mb-6 text-sm md:text-base">
+            Support local entrepreneurs and build stronger communities together. Find authentic businesses owned by
+            Black, Hispanic, Asian, Native American, and other minority entrepreneurs — both physical locations and online businesses.
+          </p>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+          {/* City/State search */}
+          <div className="max-w-lg mx-auto mb-4">
+            <input
+              type="text"
+              placeholder="Enter City, State (e.g., Buffalo, NY)"
+              value={citySearch}
+              onChange={(e) => setCitySearch(e.target.value)}
+              className="w-full px-5 py-3 rounded-2xl border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 text-gray-700"
+            />
+          </div>
+
+          {/* Find Businesses button */}
+          <div className="max-w-lg mx-auto mb-3">
+            <button
+              onClick={() => setCurrentView('search')}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-2xl shadow transition-colors text-lg"
+            >
+              🔍 Find Businesses
+            </button>
+          </div>
+
+          {/* List Your Business button */}
+          <div className="max-w-lg mx-auto">
+            <button
+              onClick={() => { resetBusinessForm(); setEditingBusiness(null); setShowBusinessForm(true); }}
+              className="w-full bg-transparent border-2 border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white font-bold py-3 rounded-2xl transition-colors text-lg"
+            >
+              + List Your Business
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* ── MAIN CONTENT ── */}
+      <main className="container mx-auto px-4 py-6">
+
         {/* Business Form Modal */}
         {showBusinessForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
-              <h2 className="text-2xl font-bold mb-4">
+              <h2 className="text-2xl font-bold mb-4 text-amber-800">
                 {editingBusiness ? 'Edit Business' : 'Add New Business'}
               </h2>
-              
               <form onSubmit={handleBusinessSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -515,7 +508,6 @@ function App() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
-                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
                     <select
@@ -552,7 +544,6 @@ function App() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
-                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
                     <input
@@ -578,7 +569,6 @@ function App() {
                       ))}
                     </select>
                   </div>
-                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code</label>
                     <input
@@ -588,7 +578,6 @@ function App() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
-                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
                     <select
@@ -613,7 +602,6 @@ function App() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
-                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input
@@ -649,11 +637,7 @@ function App() {
                 <div className="flex justify-end space-x-4 pt-4">
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowBusinessForm(false);
-                      setEditingBusiness(null);
-                      resetBusinessForm();
-                    }}
+                    onClick={() => { setShowBusinessForm(false); setEditingBusiness(null); resetBusinessForm(); }}
                     className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                   >
                     Cancel
@@ -670,21 +654,21 @@ function App() {
           </div>
         )}
 
-        {/* Search and Filters */}
-        {(currentView === 'home' || currentView === 'search' || currentView === 'favorites') && (
-          <div className="mb-8">
-            <div className="bg-white rounded-lg shadow-md p-6">
+        {/* ── SEARCH VIEW FILTERS ── */}
+        {currentView === 'search' && (
+          <div className="mb-6">
+            <div className="bg-white rounded-lg shadow-md p-5">
+              <h2 className="text-xl font-bold text-amber-800 mb-4">Search Businesses</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="lg:col-span-2">
                   <input
                     type="text"
-                    placeholder="Search businesses..."
+                    placeholder="Search by name, description..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
-                
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
@@ -694,7 +678,6 @@ function App() {
                     <option key={category} value={category}>{category}</option>
                   ))}
                 </select>
-                
                 <select
                   value={selectedState}
                   onChange={(e) => setSelectedState(e.target.value)}
@@ -704,7 +687,6 @@ function App() {
                     <option key={state} value={state}>{state === 'All' ? 'All States' : state}</option>
                   ))}
                 </select>
-                
                 <select
                   value={selectedBusinessType}
                   onChange={(e) => setSelectedBusinessType(e.target.value)}
@@ -712,9 +694,7 @@ function App() {
                 >
                   {businessTypes.map(type => (
                     <option key={type} value={type}>
-                      {type === 'All' ? 'All Types' : 
-                       type === 'physical' ? 'Physical' :
-                       type === 'online' ? 'Online' : 'Mobile'}
+                      {type === 'All' ? 'All Types' : type === 'physical' ? 'Physical' : type === 'online' ? 'Online' : 'Mobile'}
                     </option>
                   ))}
                 </select>
@@ -723,27 +703,27 @@ function App() {
           </div>
         )}
 
-        {/* Business Statistics */}
+        {/* ── BUSINESS STATISTICS ── */}
         {(currentView === 'home' || currentView === 'search' || currentView === 'favorites') && (
-          <div className="mb-8">
+          <div className="mb-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg shadow-md p-4 text-center">
+              <div className="bg-white rounded-lg shadow-md p-4 text-center border-t-4 border-amber-500">
                 <div className="text-2xl font-bold text-amber-600">{businesses.length}</div>
                 <div className="text-sm text-gray-600">Total Businesses</div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-4 text-center">
+              <div className="bg-white rounded-lg shadow-md p-4 text-center border-t-4 border-green-500">
                 <div className="text-2xl font-bold text-green-600">
                   {businesses.filter(b => b.verification_status === 'verified').length}
                 </div>
                 <div className="text-sm text-gray-600">Verified</div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-4 text-center">
+              <div className="bg-white rounded-lg shadow-md p-4 text-center border-t-4 border-blue-500">
                 <div className="text-2xl font-bold text-blue-600">
                   {businesses.filter(b => b.business_type === 'physical').length}
                 </div>
                 <div className="text-sm text-gray-600">Physical</div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-4 text-center">
+              <div className="bg-white rounded-lg shadow-md p-4 text-center border-t-4 border-purple-500">
                 <div className="text-2xl font-bold text-purple-600">
                   {businesses.filter(b => b.business_type === 'online').length}
                 </div>
@@ -753,10 +733,10 @@ function App() {
           </div>
         )}
 
-        {/* Business Listings */}
+        {/* ── BUSINESS LISTINGS ── */}
         {(currentView === 'home' || currentView === 'search' || currentView === 'favorites') && (
           <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-800">
                 {currentView === 'favorites' ? 'Your Favorites' : 'Current Businesses'}
               </h2>
@@ -772,97 +752,80 @@ function App() {
                   {currentView === 'favorites' ? 'No favorites yet' : 'No businesses found'}
                 </h3>
                 <p className="text-gray-500">
-                  {currentView === 'favorites' 
-                    ? 'Start adding businesses to your favorites!' 
+                  {currentView === 'favorites'
+                    ? 'Start adding businesses to your favorites!'
                     : 'Try adjusting your search criteria.'}
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredBusinesses.map((business) => (
-                  <div key={business.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                    <div className="p-6">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-semibold text-gray-800 mb-1">{business.name}</h3>
-                          {getVerificationBadge(business.verification_status)}
-                        </div>
-                        <button
-                          onClick={() => toggleFavorite(business.id)}
-                          className={`ml-2 text-2xl ${
-                            favorites.includes(business.id) ? 'text-red-500' : 'text-gray-300'
-                          } hover:text-red-500 transition-colors`}
-                        >
-                          ❤️
-                        </button>
-                      </div>
-                      
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <span className="font-medium mr-2">Category:</span>
-                          <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-xs">
+                  <div key={business.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow border border-amber-100">
+                    {/* Card header */}
+                    <div className="bg-gradient-to-r from-amber-600 to-orange-500 rounded-t-xl px-5 py-4 flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-bold text-white">{business.name}</h3>
+                        {business.category && (
+                          <span className="text-xs bg-white bg-opacity-20 text-white px-2 py-0.5 rounded-full mt-1 inline-block">
                             {business.category}
                           </span>
-                        </div>
-                        
-                        <div className="flex items-center text-sm text-gray-600">
-                          <span className="font-medium mr-2">Type:</span>
-                          <span>{getBusinessTypeDisplay(business.business_type)}</span>
-                        </div>
-                        
-                        {business.city && business.state && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <span className="font-medium mr-2">Location:</span>
-                            <span>{business.city}, {business.state}</span>
-                          </div>
                         )}
                       </div>
-                      
+                      <button
+                        onClick={() => toggleFavorite(business.id)}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                          favorites.includes(business.id)
+                            ? 'bg-red-500 text-white'
+                            : 'bg-white bg-opacity-20 text-white hover:bg-red-500'
+                        }`}
+                      >
+                        ❤️
+                      </button>
+                    </div>
+
+                    {/* Card body */}
+                    <div className="p-5">
+                      <div className="space-y-1 mb-3 text-sm text-gray-600">
+                        <div><span className="font-medium">Type:</span> {getBusinessTypeDisplay(business.business_type)}</div>
+                        {business.city && business.state && (
+                          <div><span className="font-medium">Location:</span> {business.city}, {business.state}</div>
+                        )}
+                        {getVerificationBadge(business.verification_status)}
+                      </div>
+
                       {business.description && (
                         <p className="text-gray-600 text-sm mb-4 line-clamp-3">{business.description}</p>
                       )}
-                      
-                      <div className="flex flex-wrap gap-2 mb-4">
+
+                      <div className="flex flex-wrap gap-2 mb-3">
                         {business.phone && (
-                          <a
-                            href={`tel:${business.phone}`}
-                            className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200 transition-colors"
-                          >
+                          <a href={`tel:${business.phone}`} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200 transition-colors">
                             📞 Call
                           </a>
                         )}
                         {business.email && (
-                          <a
-                            href={`mailto:${business.email}`}
-                            className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200 transition-colors"
-                          >
+                          <a href={`mailto:${business.email}`} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200 transition-colors">
                             ✉️ Email
                           </a>
                         )}
                         {business.website && (
-                          <a
-                            href={business.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded hover:bg-purple-200 transition-colors"
-                          >
+                          <a href={business.website} target="_blank" rel="noopener noreferrer" className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded hover:bg-purple-200 transition-colors">
                             🌐 Website
                           </a>
                         )}
                       </div>
 
-                      {/* Admin Controls */}
                       {isAdminAuthenticated && (
-                        <div className="flex space-x-2 pt-4 border-t border-gray-200">
+                        <div className="flex space-x-2 pt-3 border-t border-gray-100">
                           <button
                             onClick={() => handleEditBusiness(business)}
-                            className="flex-1 bg-yellow-500 text-white px-3 py-2 rounded text-sm hover:bg-yellow-600 transition-colors"
+                            className="flex-1 bg-yellow-500 text-white px-3 py-1.5 rounded text-sm hover:bg-yellow-600 transition-colors"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeleteBusiness(business)}
-                            className="flex-1 bg-red-500 text-white px-3 py-2 rounded text-sm hover:bg-red-600 transition-colors"
+                            className="flex-1 bg-red-500 text-white px-3 py-1.5 rounded text-sm hover:bg-red-600 transition-colors"
                           >
                             Delete
                           </button>
@@ -876,57 +839,34 @@ function App() {
           </div>
         )}
 
-        {/* Profile/Contact View */}
+        {/* ── PROFILE / CONTACT VIEW ── */}
         {currentView === 'profile' && (
           <div className="max-w-2xl mx-auto">
             <div className="bg-white rounded-lg shadow-md p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Contact Us</h2>
-              
               <form onSubmit={handleContactSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                  <input
-                    type="text"
-                    name="from_name"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
+                  <input type="text" name="from_name" required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    name="from_email"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
+                  <input type="email" name="from_email" required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-                  <input
-                    type="text"
-                    name="subject"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
+                  <input type="text" name="subject" required
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
-                  <textarea
-                    name="message"
-                    required
-                    rows="5"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  ></textarea>
+                  <textarea name="message" required rows="5"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
                 </div>
-                
-                <button
-                  type="submit"
-                  className="w-full bg-amber-600 text-white py-3 px-4 rounded-lg hover:bg-amber-700 transition-colors font-medium"
-                >
+                <button type="submit"
+                  className="w-full bg-amber-600 text-white py-3 px-4 rounded-lg hover:bg-amber-700 transition-colors font-medium">
                   Send Message
                 </button>
               </form>
@@ -935,26 +875,48 @@ function App() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8 mt-12">
+      {/* ── FOOTER ── */}
+      <footer className="bg-gray-800 text-white py-8 mt-8">
         <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            <div className="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center">
-              <span className="text-lg">🏪</span>
-            </div>
+          <div className="flex items-center justify-center space-x-3 mb-3">
+            <img src="/logo.PNG" alt="Melanin Market" className="w-8 h-8 rounded-md object-contain bg-white p-0.5" />
             <span className="text-xl font-bold">Melanin Market</span>
           </div>
-          <p className="text-gray-400 mb-4">
+          <p className="text-gray-400 mb-3 text-sm">
             Supporting and celebrating Black-owned businesses across America
           </p>
           <div className="text-sm text-gray-500">
             <p>© 2024 Melanin Market. All rights reserved.</p>
-            <p className="mt-2">
-              Powered by GitHub • {businesses.length} businesses and growing
-            </p>
+            <p className="mt-1">Powered by GitHub • {businesses.length} businesses and growing</p>
           </div>
         </div>
       </footer>
+
+      {/* ── BOTTOM NAVIGATION ── */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
+        <div className="grid grid-cols-4">
+          {[
+            { view: 'home', icon: '🏠', label: 'Home' },
+            { view: 'search', icon: '🔍', label: 'Search' },
+            { view: 'favorites', icon: '❤️', label: 'Favorites' },
+            { view: 'profile', icon: '👤', label: 'Profile' },
+          ].map(({ view, icon, label }) => (
+            <button
+              key={view}
+              onClick={() => setCurrentView(view)}
+              className={`flex flex-col items-center justify-center py-3 text-xs font-medium transition-colors ${
+                currentView === view
+                  ? 'text-orange-500'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <span className="text-xl mb-0.5">{icon}</span>
+              {label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
     </div>
   );
 }
