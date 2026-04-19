@@ -29,49 +29,62 @@ function App() {
   const [citySearch, setCitySearch] = useState('');
   const [editingBusiness, setEditingBusiness] = useState(null);
   const [showBusinessForm, setShowBusinessForm] = useState(false);
+  const [showPublicSubmitForm, setShowPublicSubmitForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
-  // Business form state
+  // Admin business form state
   const [businessForm, setBusinessForm] = useState({
-    name: '',
-    type: '',
-    owner: '',
-    category: '',
-    description: '',
-    address: '',
-    city: '',
-    state: '',
-    zip: '',
-    phone: '',
-    email: '',
-    website: '',
-    hours: '',
-    image: '',
-    rating: '0.0 (0)',
-    service_area: '',
-    business_type: 'physical',
-    verificationSubmitted: false,
-    verificationMethod: '',
-    verificationDetails: '',
-    verification_document: ''
+    name: '', type: '', owner: '', category: '', description: '',
+    address: '', city: '', state: '', zip: '', phone: '', email: '',
+    website: '', hours: '', image: '', rating: '0.0 (0)', service_area: '',
+    business_type: 'physical', verificationSubmitted: false,
+    verificationMethod: '', verificationDetails: '', verification_document: ''
   });
 
-  // Category tabs shown in search view
+  // Public submission form state (separate from admin form)
+  const [publicForm, setPublicForm] = useState({
+    name: '', business_type: 'physical', category: '', owner: '',
+    description: '', address: '', city: '', state: '', service_area: '',
+    phone: '', email: '', website: '', hours: '', image: '',
+    verificationMethod: '', verificationDetails: ''
+  });
+
   const categoryTabs = ['All', 'Restaurant', 'Technology', 'Grocery', 'Entertainment', 'Beauty', 'Health', 'Retail', 'Services', 'Other'];
 
-  // Full category list for form
   const allCategories = [
     'Restaurant', 'Technology', 'Grocery', 'Entertainment', 'Beauty',
     'Health', 'Retail', 'Services', 'Coffee', 'Other'
   ];
 
-  // US States
   const states = [
     'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID',
     'IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO',
     'MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA',
     'RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'
   ];
+
+  // PWA install prompt listener
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') setShowInstallPrompt(false);
+      setDeferredPrompt(null);
+    }
+  };
 
   // Initialize EmailJS
   useEffect(() => {
@@ -101,7 +114,7 @@ function App() {
     }
   };
 
-  // Add new business
+  // Admin: Add new business directly
   const addBusiness = async (businessData) => {
     try {
       const response = await fetch('/api/businesses', {
@@ -118,7 +131,7 @@ function App() {
     }
   };
 
-  // Update existing business
+  // Admin: Update existing business
   const updateBusiness = async (id, businessData) => {
     try {
       const response = await fetch('/api/businesses', {
@@ -135,7 +148,7 @@ function App() {
     }
   };
 
-  // Delete business
+  // Admin: Delete business
   const deleteBusiness = async (id) => {
     try {
       const response = await fetch('/api/businesses', {
@@ -152,7 +165,6 @@ function App() {
     }
   };
 
-  // Load on mount
   useEffect(() => {
     loadBusinesses();
     const savedFavorites = localStorage.getItem('melanin-market-favorites');
@@ -162,7 +174,6 @@ function App() {
   // Filter businesses
   useEffect(() => {
     let filtered = businesses;
-
     if (searchTerm) {
       filtered = filtered.filter(b =>
         b.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -170,7 +181,6 @@ function App() {
         b.city?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
     if (citySearch) {
       filtered = filtered.filter(b =>
         b.city?.toLowerCase().includes(citySearch.toLowerCase()) ||
@@ -178,25 +188,20 @@ function App() {
         b.address?.toLowerCase().includes(citySearch.toLowerCase())
       );
     }
-
     if (selectedCategory !== 'All') {
       filtered = filtered.filter(b =>
         (b.category || b.type || '').toLowerCase() === selectedCategory.toLowerCase()
       );
     }
-
     if (selectedState !== 'All') {
       filtered = filtered.filter(b => b.state === selectedState);
     }
-
     if (selectedBusinessType !== 'All') {
       filtered = filtered.filter(b => b.business_type === selectedBusinessType);
     }
-
     if (currentView === 'favorites') {
       filtered = filtered.filter(b => favorites.includes(b.id));
     }
-
     setFilteredBusinesses(filtered);
   }, [businesses, searchTerm, citySearch, selectedCategory, selectedState, selectedBusinessType, currentView, favorites]);
 
@@ -226,7 +231,17 @@ function App() {
     });
   };
 
-  const handleBusinessSubmit = async (e) => {
+  const resetPublicForm = () => {
+    setPublicForm({
+      name: '', business_type: 'physical', category: '', owner: '',
+      description: '', address: '', city: '', state: '', service_area: '',
+      phone: '', email: '', website: '', hours: '', image: '',
+      verificationMethod: '', verificationDetails: ''
+    });
+  };
+
+  // Admin form submit (direct add/update to live app)
+  const handleAdminBusinessSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     if (editingBusiness) {
@@ -248,6 +263,48 @@ function App() {
       } else {
         alert(`Error adding business: ${result.error}`);
       }
+    }
+    setIsSubmitting(false);
+  };
+
+  // Public form submit — sends email to admin for approval, does NOT add to app
+  const handlePublicSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const templateParams = {
+      to_email: 'admin@melanin-market.com',
+      subject: `New Business Submission - ${publicForm.name}`,
+      business_name: publicForm.name,
+      business_type: publicForm.business_type,
+      category: publicForm.category,
+      owner_ethnicity: publicForm.owner,
+      description: publicForm.description,
+      address: publicForm.business_type === 'physical' ? publicForm.address : 'Online/Mobile Business',
+      city: publicForm.city,
+      state: publicForm.state,
+      service_area: publicForm.service_area,
+      phone: publicForm.phone,
+      email: publicForm.email,
+      website: publicForm.website,
+      hours: publicForm.hours,
+      verification_method: publicForm.verificationMethod || 'Not provided',
+      verification_details: publicForm.verificationDetails || 'Not provided',
+      message: `New business submission for review:\n\nBusiness: ${publicForm.name}\nType: ${publicForm.business_type}\nCategory: ${publicForm.category}\nOwner: ${publicForm.owner}\nDescription: ${publicForm.description}\nAddress: ${publicForm.address}, ${publicForm.city}, ${publicForm.state}\nService Area: ${publicForm.service_area}\nPhone: ${publicForm.phone}\nEmail: ${publicForm.email}\nWebsite: ${publicForm.website}\nHours: ${publicForm.hours}\nVerification Method: ${publicForm.verificationMethod || 'Not provided'}\nVerification Details: ${publicForm.verificationDetails || 'Not provided'}`
+    };
+
+    try {
+      await emailjs.send(
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID,
+        templateParams,
+        EMAILJS_CONFIG.PUBLIC_KEY
+      );
+      setSubmitSuccess(true);
+      resetPublicForm();
+    } catch (error) {
+      console.error('EmailJS error:', error);
+      alert('There was an error submitting your business. Please try again or contact us directly at admin@melanin-market.com');
     }
     setIsSubmitting(false);
   };
@@ -308,7 +365,6 @@ function App() {
   };
 
   const isVerified = (b) => b.verificationSubmitted || b.verified || b.verification_status === 'verified';
-
   const getCategoryDisplay = (b) => b.category || b.type || '';
 
   const renderStars = (ratingStr) => {
@@ -316,8 +372,7 @@ function App() {
     const num = parseFloat(ratingStr);
     if (isNaN(num)) return null;
     const full = Math.floor(num);
-    const stars = '⭐'.repeat(Math.min(full, 5));
-    return stars;
+    return '⭐'.repeat(Math.min(full, 5));
   };
 
   // Loading screen
@@ -455,7 +510,7 @@ function App() {
           </div>
           <div className="max-w-lg mx-auto">
             <button
-              onClick={() => { resetBusinessForm(); setEditingBusiness(null); setShowBusinessForm(true); }}
+              onClick={() => { setShowPublicSubmitForm(true); setSubmitSuccess(false); }}
               className="w-full bg-transparent border-2 border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white font-bold py-3 rounded-2xl transition-colors text-lg"
             >
               + List Your Business
@@ -467,14 +522,229 @@ function App() {
       {/* ── MAIN CONTENT ── */}
       <main className="container mx-auto px-4 py-6">
 
-        {/* ── BUSINESS FORM MODAL ── */}
-        {showBusinessForm && (
+        {/* ── PUBLIC BUSINESS SUBMISSION FORM (modal) ── */}
+        {showPublicSubmitForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
+
+              {submitSuccess ? (
+                <div className="text-center py-10">
+                  <div className="text-6xl mb-4">🎉</div>
+                  <h2 className="text-2xl font-bold text-green-700 mb-3">Submission Received!</h2>
+                  <p className="text-gray-600 mb-2">
+                    Thank you for submitting <strong>{publicForm.name || 'your business'}</strong>!
+                  </p>
+                  <p className="text-gray-500 text-sm mb-6">
+                    Our team will review your submission and add it to the Melanin Market directory after approval.
+                    You will be contacted at the email you provided.
+                  </p>
+                  <button
+                    onClick={() => { setShowPublicSubmitForm(false); setSubmitSuccess(false); }}
+                    className="bg-orange-500 text-white px-8 py-3 rounded-xl font-bold hover:bg-orange-600 transition-colors"
+                  >
+                    Back to Home
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-800">Add Your Business</h2>
+                      <p className="text-gray-500 text-sm mt-1">
+                        Join our community of minority-owned businesses and reach more customers.
+                        We support physical locations, online businesses, and mobile services.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowPublicSubmitForm(false)}
+                      className="text-gray-400 hover:text-gray-600 text-2xl font-bold ml-4"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <form onSubmit={handlePublicSubmit} className="space-y-4">
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Business Name *</label>
+                      <input type="text" required value={publicForm.name}
+                        onChange={(e) => setPublicForm({...publicForm, name: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Business Type *</label>
+                        <select required value={publicForm.business_type}
+                          onChange={(e) => setPublicForm({...publicForm, business_type: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                          <option value="physical">Physical Location/Storefront</option>
+                          <option value="online">Online Business Only</option>
+                          <option value="mobile">Mobile/Service Business</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Category *</label>
+                        <select required value={publicForm.category}
+                          onChange={(e) => setPublicForm({...publicForm, category: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                          <option value="">Select category</option>
+                          {allCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Owner Ethnicity *</label>
+                      <select required value={publicForm.owner}
+                        onChange={(e) => setPublicForm({...publicForm, owner: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <option value="">Select owner ethnicity</option>
+                        <option value="Black-owned">Black-owned</option>
+                        <option value="Hispanic-owned">Hispanic-owned</option>
+                        <option value="Asian-owned">Asian-owned</option>
+                        <option value="Native American-owned">Native American-owned</option>
+                        <option value="Latino-owned">Latino-owned</option>
+                        <option value="Other minority-owned">Other minority-owned</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Description *</label>
+                      <textarea required value={publicForm.description} rows="3"
+                        onChange={(e) => setPublicForm({...publicForm, description: e.target.value})}
+                        placeholder="Tell customers about your business..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                    </div>
+
+                    {/* Address — only required for physical */}
+                    {publicForm.business_type === 'physical' && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Address *</label>
+                        <input type="text" required value={publicForm.address}
+                          onChange={(e) => setPublicForm({...publicForm, address: e.target.value})}
+                          placeholder="Street address"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                          City {publicForm.business_type === 'physical' ? '*' : ''}
+                        </label>
+                        <input
+                          type="text"
+                          required={publicForm.business_type === 'physical'}
+                          value={publicForm.city}
+                          onChange={(e) => setPublicForm({...publicForm, city: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                          State {publicForm.business_type === 'physical' ? '*' : ''}
+                        </label>
+                        <select
+                          required={publicForm.business_type === 'physical'}
+                          value={publicForm.state}
+                          onChange={(e) => setPublicForm({...publicForm, state: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                          <option value="">Select State</option>
+                          {states.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Service Area</label>
+                      <input type="text" value={publicForm.service_area}
+                        onChange={(e) => setPublicForm({...publicForm, service_area: e.target.value})}
+                        placeholder={publicForm.business_type === 'online' ? 'e.g., Nationwide, Worldwide Shipping' : 'Local area served'}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Phone *</label>
+                        <input type="tel" required value={publicForm.phone}
+                          onChange={(e) => setPublicForm({...publicForm, phone: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Email *</label>
+                        <input type="email" required value={publicForm.email}
+                          onChange={(e) => setPublicForm({...publicForm, email: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Website</label>
+                      <input type="url" value={publicForm.website}
+                        onChange={(e) => setPublicForm({...publicForm, website: e.target.value})}
+                        placeholder="https://yourwebsite.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Hours</label>
+                      <textarea value={publicForm.hours} rows="2"
+                        onChange={(e) => setPublicForm({...publicForm, hours: e.target.value})}
+                        placeholder="Mon-Fri: 9AM-6PM, Sat: 10AM-4PM, Sun: Closed"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                    </div>
+
+                    {/* Business Verification Section */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                      <h3 className="text-base font-bold text-amber-800 mb-1">🏆 Business Verification (Optional)</h3>
+                      <p className="text-amber-700 text-sm mb-4">
+                        Provide verification details to receive a verified business badge and build customer trust.
+                      </p>
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Verification Method</label>
+                          <select value={publicForm.verificationMethod}
+                            onChange={(e) => setPublicForm({...publicForm, verificationMethod: e.target.value})}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="">Select verification method</option>
+                            <option value="business-license">Business License</option>
+                            <option value="ein">EIN Number</option>
+                            <option value="dba">DBA Certificate</option>
+                            <option value="other">Other Documentation</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Verification Details</label>
+                          <input type="text" value={publicForm.verificationDetails}
+                            onChange={(e) => setPublicForm({...publicForm, verificationDetails: e.target.value})}
+                            placeholder="License number, EIN, or other verification info"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <button type="submit" disabled={isSubmitting}
+                      className="w-full bg-orange-500 text-white py-4 rounded-xl hover:bg-orange-600 transition-colors font-bold text-lg disabled:opacity-60 flex items-center justify-center gap-2">
+                      {isSubmitting ? 'Submitting...' : '📋 Submit Business for Review'}
+                    </button>
+
+                  </form>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── ADMIN BUSINESS FORM MODAL ── */}
+        {showBusinessForm && isAdminAuthenticated && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
               <h2 className="text-2xl font-bold mb-4 text-amber-800">
-                {editingBusiness ? 'Edit Business' : 'Add New Business'}
+                {editingBusiness ? 'Edit Business' : 'Add New Business (Admin)'}
               </h2>
-              <form onSubmit={handleBusinessSubmit} className="space-y-4">
+              <form onSubmit={handleAdminBusinessSubmit} className="space-y-4">
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Business Name *</label>
@@ -490,8 +760,8 @@ function App() {
                       onChange={(e) => setBusinessForm({...businessForm, business_type: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
                       <option value="physical">Physical Location/Storefront</option>
-                      <option value="online">Online Only</option>
-                      <option value="mobile">Mobile Service</option>
+                      <option value="online">Online Business Only</option>
+                      <option value="mobile">Mobile/Service Business</option>
                     </select>
                   </div>
                   <div>
@@ -528,23 +798,23 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Address *</label>
-                  <input type="text" required value={businessForm.address}
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Address</label>
+                  <input type="text" value={businessForm.address}
                     onChange={(e) => setBusinessForm({...businessForm, address: e.target.value})}
-                    placeholder="Street address"
+                    placeholder="Street address (leave blank for online businesses)"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">City *</label>
-                    <input type="text" required value={businessForm.city}
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">City</label>
+                    <input type="text" value={businessForm.city}
                       onChange={(e) => setBusinessForm({...businessForm, city: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">State *</label>
-                    <select required value={businessForm.state}
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">State</label>
+                    <select value={businessForm.state}
                       onChange={(e) => setBusinessForm({...businessForm, state: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
                       <option value="">Select State</option>
@@ -665,7 +935,6 @@ function App() {
               <h1 className="text-2xl font-bold text-gray-800">All Businesses</h1>
             </div>
 
-            {/* Search bar */}
             <div className="bg-white rounded-xl shadow-md p-4 mb-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <input
@@ -797,8 +1066,8 @@ function App() {
                         </div>
                       )}
 
-                      {/* Address with directions */}
-                      {business.address && (
+                      {/* Address with directions (physical only) */}
+                      {business.business_type !== 'online' && business.address && (
                         <div className="mb-1">
                           <a
                             href={getDirectionsUrl(business)}
@@ -811,8 +1080,15 @@ function App() {
                         </div>
                       )}
 
-                      {/* Service area */}
-                      {business.service_area && (
+                      {/* Online business indicator */}
+                      {business.business_type === 'online' && (
+                        <div className="text-sm text-gray-600 mb-1">
+                          🌐 Online Business{business.service_area ? ` • Serves: ${business.service_area}` : ''}
+                        </div>
+                      )}
+
+                      {/* Service area (for non-online) */}
+                      {business.business_type !== 'online' && business.service_area && (
                         <div className="text-sm text-gray-600 mb-1">🗺️ Service Area: {business.service_area}</div>
                       )}
 
@@ -871,9 +1147,43 @@ function App() {
           </div>
         )}
 
-        {/* ── PROFILE / CONTACT VIEW ── */}
+        {/* ── PROFILE VIEW ── */}
         {currentView === 'profile' && (
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-2xl mx-auto space-y-6">
+
+            {/* PWA Install Card */}
+            {showInstallPrompt && (
+              <div className="bg-white rounded-2xl shadow-md p-8 text-center">
+                <div className="text-5xl mb-3">📱</div>
+                <h2 className="text-xl font-bold text-gray-800 mb-2">Install Melanin Market</h2>
+                <p className="text-gray-500 text-sm mb-5">
+                  Add this app to your home screen for quick access to minority-owned businesses in your area.
+                </p>
+                <button
+                  onClick={handleInstallApp}
+                  className="w-full bg-orange-500 text-white py-3 rounded-xl font-bold hover:bg-orange-600 transition-colors text-lg flex items-center justify-center gap-2"
+                >
+                  📲 Install App
+                </button>
+              </div>
+            )}
+
+            {/* Add Your Business Card */}
+            <div className="bg-white rounded-2xl shadow-md p-8 text-center">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Add Your Business</h2>
+              <p className="text-gray-500 text-sm mb-5">
+                Join our community of minority-owned businesses and reach more customers.
+                We support physical locations, online businesses, and mobile services.
+              </p>
+              <button
+                onClick={() => { setShowPublicSubmitForm(true); setSubmitSuccess(false); }}
+                className="w-full bg-orange-500 text-white py-3 rounded-xl font-bold hover:bg-orange-600 transition-colors text-lg"
+              >
+                + List Your Business
+              </button>
+            </div>
+
+            {/* Contact Us */}
             <div className="bg-white rounded-2xl shadow-md p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Contact Us</h2>
               <form onSubmit={handleContactSubmit} className="space-y-5">
@@ -926,19 +1236,22 @@ function App() {
 
       {/* ── BOTTOM NAVIGATION ── */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
-        <div className="grid grid-cols-4">
+        <div className="flex justify-around items-center py-2">
           {[
             { view: 'home', icon: '🏠', label: 'Home' },
             { view: 'search', icon: '🔍', label: 'Search' },
             { view: 'favorites', icon: '❤️', label: 'Favorites' },
             { view: 'profile', icon: '👤', label: 'Profile' },
           ].map(({ view, icon, label }) => (
-            <button key={view} onClick={() => setCurrentView(view)}
-              className={`flex flex-col items-center justify-center py-3 text-xs font-medium transition-colors ${
+            <button
+              key={view}
+              onClick={() => setCurrentView(view)}
+              className={`flex flex-col items-center py-1 px-4 transition-colors ${
                 currentView === view ? 'text-orange-500' : 'text-gray-500 hover:text-gray-700'
-              }`}>
-              <span className="text-xl mb-0.5">{icon}</span>
-              {label}
+              }`}
+            >
+              <span className="text-xl">{icon}</span>
+              <span className="text-xs mt-0.5 font-medium">{label}</span>
             </button>
           ))}
         </div>
