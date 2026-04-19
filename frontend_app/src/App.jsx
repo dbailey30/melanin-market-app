@@ -988,15 +988,47 @@ function App() {
           </div>
         )}
 
-        {/* ── BUSINESS LISTINGS ── */}
-        {(currentView === 'home' || currentView === 'search' || currentView === 'favorites') && (
-          <div>
-            {currentView === 'home' && (
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-800">Current Businesses</h2>
-                <span className="text-sm text-gray-500">Showing {filteredBusinesses.length} of {businesses.length}</span>
+        {/* ── HOME FEATURE CARDS (home view only) ── */}
+        {currentView === 'home' && (
+          <div className="space-y-4 max-w-2xl mx-auto">
+            {/* Popular Cities */}
+            <div className="text-center">
+              <p className="text-sm text-gray-500 mb-3">Popular Cities:</p>
+              <div className="flex flex-wrap justify-center gap-3">
+                {['Buffalo, NY', 'Rochester, NY', 'Syracuse, NY'].map(city => (
+                  <button key={city}
+                    onClick={() => { setCitySearch(city); setCurrentView('search'); }}
+                    className="px-5 py-2 bg-white border border-gray-200 rounded-full text-sm font-semibold text-gray-700 hover:border-orange-400 hover:text-orange-600 shadow-sm transition-colors">
+                    {city}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+
+            {/* Feature Cards */}
+            <div className="bg-white rounded-2xl shadow-md p-8 text-center">
+              <div className="text-4xl mb-3">🔍</div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Discover Local &amp; Online</h3>
+              <p className="text-gray-500 text-sm">Find authentic minority-owned businesses in your community and online, from restaurants and cafes to tech companies and e-commerce stores.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-md p-8 text-center">
+              <div className="text-4xl mb-3">🤝</div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Support &amp; Save</h3>
+              <p className="text-gray-500 text-sm">Save your favorite businesses and support entrepreneurs who are building stronger, more diverse communities both locally and globally.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-md p-8 text-center">
+              <div className="text-4xl mb-3">✨</div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Build Community</h3>
+              <p className="text-gray-500 text-sm">Connect with business owners, leave reviews, and help create a thriving ecosystem of minority-owned enterprises across all business types.</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── BUSINESS LISTINGS ── */}
+        {(currentView === 'search' || currentView === 'favorites') && (
+          <div>
 
             {filteredBusinesses.length === 0 ? (
               <div className="text-center py-16">
@@ -1152,21 +1184,19 @@ function App() {
           <div className="max-w-2xl mx-auto space-y-6">
 
             {/* PWA Install Card */}
-            {showInstallPrompt && (
-              <div className="bg-white rounded-2xl shadow-md p-8 text-center">
-                <div className="text-5xl mb-3">📱</div>
-                <h2 className="text-xl font-bold text-gray-800 mb-2">Install Melanin Market</h2>
-                <p className="text-gray-500 text-sm mb-5">
-                  Add this app to your home screen for quick access to minority-owned businesses in your area.
-                </p>
-                <button
-                  onClick={handleInstallApp}
-                  className="w-full bg-orange-500 text-white py-3 rounded-xl font-bold hover:bg-orange-600 transition-colors text-lg flex items-center justify-center gap-2"
-                >
-                  📲 Install App
-                </button>
-              </div>
-            )}
+            <div className="bg-white rounded-2xl shadow-md p-8 text-center">
+              <div className="text-5xl mb-3">📱</div>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Install Melanin Market</h2>
+              <p className="text-gray-500 text-sm mb-5">
+                Add this app to your home screen for quick access to minority-owned businesses in your area.
+              </p>
+              <button
+                onClick={handleInstallApp}
+                className="w-full bg-orange-500 text-white py-3 rounded-xl font-bold hover:bg-orange-600 transition-colors text-lg flex items-center justify-center gap-2"
+              >
+                📲 Install App
+              </button>
+            </div>
 
             {/* Add Your Business Card */}
             <div className="bg-white rounded-2xl shadow-md p-8 text-center">
