@@ -5,6 +5,13 @@ import './App.css';
 // Admin password for business management
 const ADMIN_PASSWORD = 'melanin2025admin';
 
+// EmailJS Configuration
+const EMAILJS_CONFIG = {
+  SERVICE_ID: 'service_l1mf75l',
+  TEMPLATE_ID: 'template_1zwylhd',
+  PUBLIC_KEY: 'jv0z8LO2xSTdzuvDz'
+};
+
 function App() {
   const [businesses, setBusinesses] = useState([]);
   const [filteredBusinesses, setFilteredBusinesses] = useState([]);
@@ -20,10 +27,15 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [apiStatus, setApiStatus] = useState('checking');
   const [citySearch, setCitySearch] = useState('');
+  const [editingBusiness, setEditingBusiness] = useState(null);
+  const [showBusinessForm, setShowBusinessForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Business form states
+  // Business form state
   const [businessForm, setBusinessForm] = useState({
     name: '',
+    type: '',
+    owner: '',
     category: '',
     description: '',
     address: '',
@@ -33,33 +45,40 @@ function App() {
     phone: '',
     email: '',
     website: '',
+    hours: '',
+    image: '',
+    rating: '0.0 (0)',
+    service_area: '',
     business_type: 'physical',
+    verificationSubmitted: false,
+    verificationMethod: '',
+    verificationDetails: '',
     verification_document: ''
   });
 
-  const [editingBusiness, setEditingBusiness] = useState(null);
-  const [showBusinessForm, setShowBusinessForm] = useState(false);
+  // Category tabs shown in search view
+  const categoryTabs = ['All', 'Restaurant', 'Technology', 'Grocery', 'Entertainment', 'Beauty', 'Health', 'Retail', 'Services', 'Other'];
 
-  // Categories for filtering
-  const categories = [
-    'All', 'Restaurant', 'Retail', 'Beauty & Wellness', 'Professional Services',
-    'Entertainment', 'Health & Fitness', 'Education', 'Technology', 'Real Estate',
-    'Automotive', 'Home & Garden', 'Financial Services', 'Legal Services',
-    'Marketing & Advertising', 'Construction', 'Transportation', 'Other'
+  // Full category list for form
+  const allCategories = [
+    'Restaurant', 'Technology', 'Grocery', 'Entertainment', 'Beauty',
+    'Health', 'Retail', 'Services', 'Coffee', 'Other'
   ];
 
   // US States
   const states = [
-    'All', 'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID',
-    'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO',
-    'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA',
-    'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+    'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID',
+    'IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO',
+    'MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA',
+    'RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'
   ];
 
-  // Business types
-  const businessTypes = ['All', 'physical', 'online', 'mobile'];
+  // Initialize EmailJS
+  useEffect(() => {
+    emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+  }, []);
 
-  // Load businesses from GitHub via Vercel serverless API
+  // Load businesses from API
   const loadBusinesses = async () => {
     try {
       setLoading(true);
@@ -67,14 +86,10 @@ function App() {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
-
       if (!response.ok) {
-        const err = await response.json();
-        console.error('Error loading businesses:', err);
         setApiStatus('error');
         return;
       }
-
       const data = await response.json();
       setBusinesses(data.businesses || []);
       setApiStatus('connected');
@@ -92,19 +107,13 @@ function App() {
       const response = await fetch('/api/businesses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminAuth: ADMIN_PASSWORD,
-          businessData: businessData,
-        }),
+        body: JSON.stringify({ adminAuth: ADMIN_PASSWORD, businessData }),
       });
       const result = await response.json();
-      if (!response.ok) {
-        return { success: false, error: result.error || result.message || 'Unknown error' };
-      }
+      if (!response.ok) return { success: false, error: result.error || 'Unknown error' };
       await loadBusinesses();
-      return { success: true, data: result.business };
+      return { success: true };
     } catch (error) {
-      console.error('Error adding business:', error);
       return { success: false, error: error.message };
     }
   };
@@ -115,20 +124,13 @@ function App() {
       const response = await fetch('/api/businesses', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminAuth: ADMIN_PASSWORD,
-          businessId: id,
-          businessData: businessData,
-        }),
+        body: JSON.stringify({ adminAuth: ADMIN_PASSWORD, businessId: id, businessData }),
       });
       const result = await response.json();
-      if (!response.ok) {
-        return { success: false, error: result.error || result.message || 'Unknown error' };
-      }
+      if (!response.ok) return { success: false, error: result.error || 'Unknown error' };
       await loadBusinesses();
-      return { success: true, data: result.business };
+      return { success: true };
     } catch (error) {
-      console.error('Error updating business:', error);
       return { success: false, error: error.message };
     }
   };
@@ -139,30 +141,22 @@ function App() {
       const response = await fetch('/api/businesses', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminAuth: ADMIN_PASSWORD,
-          businessId: id,
-        }),
+        body: JSON.stringify({ adminAuth: ADMIN_PASSWORD, businessId: id }),
       });
       const result = await response.json();
-      if (!response.ok) {
-        return { success: false, error: result.error || result.message || 'Unknown error' };
-      }
+      if (!response.ok) return { success: false, error: result.error || 'Unknown error' };
       await loadBusinesses();
       return { success: true };
     } catch (error) {
-      console.error('Error deleting business:', error);
       return { success: false, error: error.message };
     }
   };
 
-  // Load businesses on mount
+  // Load on mount
   useEffect(() => {
     loadBusinesses();
     const savedFavorites = localStorage.getItem('melanin-market-favorites');
-    if (savedFavorites) {
-      setFavorites(JSON.parse(savedFavorites));
-    }
+    if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
   }, []);
 
   // Filter businesses
@@ -170,34 +164,37 @@ function App() {
     let filtered = businesses;
 
     if (searchTerm) {
-      filtered = filtered.filter(business =>
-        business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        business.city.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(b =>
+        b.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        b.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        b.city?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     if (citySearch) {
-      filtered = filtered.filter(business =>
-        business.city.toLowerCase().includes(citySearch.toLowerCase()) ||
-        business.state.toLowerCase().includes(citySearch.toLowerCase())
+      filtered = filtered.filter(b =>
+        b.city?.toLowerCase().includes(citySearch.toLowerCase()) ||
+        b.state?.toLowerCase().includes(citySearch.toLowerCase()) ||
+        b.address?.toLowerCase().includes(citySearch.toLowerCase())
       );
     }
 
     if (selectedCategory !== 'All') {
-      filtered = filtered.filter(business => business.category === selectedCategory);
+      filtered = filtered.filter(b =>
+        (b.category || b.type || '').toLowerCase() === selectedCategory.toLowerCase()
+      );
     }
 
     if (selectedState !== 'All') {
-      filtered = filtered.filter(business => business.state === selectedState);
+      filtered = filtered.filter(b => b.state === selectedState);
     }
 
     if (selectedBusinessType !== 'All') {
-      filtered = filtered.filter(business => business.business_type === selectedBusinessType);
+      filtered = filtered.filter(b => b.business_type === selectedBusinessType);
     }
 
     if (currentView === 'favorites') {
-      filtered = filtered.filter(business => favorites.includes(business.id));
+      filtered = filtered.filter(b => favorites.includes(b.id));
     }
 
     setFilteredBusinesses(filtered);
@@ -206,7 +203,7 @@ function App() {
   const handleAdminLogin = () => {
     if (adminPassword === ADMIN_PASSWORD) {
       setIsAdminAuthenticated(true);
-      setShowAdminPanel(true);
+      setShowAdminPanel(false);
       setAdminPassword('');
     } else {
       alert('Incorrect password');
@@ -219,8 +216,19 @@ function App() {
     setCurrentView('home');
   };
 
+  const resetBusinessForm = () => {
+    setBusinessForm({
+      name: '', type: '', owner: '', category: '', description: '',
+      address: '', city: '', state: '', zip: '', phone: '', email: '',
+      website: '', hours: '', image: '', rating: '0.0 (0)', service_area: '',
+      business_type: 'physical', verificationSubmitted: false,
+      verificationMethod: '', verificationDetails: '', verification_document: ''
+    });
+  };
+
   const handleBusinessSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     if (editingBusiness) {
       const result = await updateBusiness(editingBusiness.id, businessForm);
       if (result.success) {
@@ -241,53 +249,42 @@ function App() {
         alert(`Error adding business: ${result.error}`);
       }
     }
+    setIsSubmitting(false);
   };
 
   const handleDeleteBusiness = async (business) => {
     if (window.confirm(`Are you sure you want to delete "${business.name}"?`)) {
       const result = await deleteBusiness(business.id);
-      if (result.success) {
-        alert('Business deleted successfully!');
-      } else {
-        alert(`Error deleting business: ${result.error}`);
-      }
+      if (!result.success) alert(`Error deleting business: ${result.error}`);
     }
   };
 
   const handleEditBusiness = (business) => {
     setBusinessForm({
-      name: business.name,
-      category: business.category,
-      description: business.description,
-      address: business.address,
-      city: business.city,
-      state: business.state,
-      zip: business.zip,
-      phone: business.phone,
-      email: business.email,
-      website: business.website,
-      business_type: business.business_type,
+      name: business.name || '',
+      type: business.type || '',
+      owner: business.owner || '',
+      category: business.category || business.type || '',
+      description: business.description || '',
+      address: business.address || '',
+      city: business.city || '',
+      state: business.state || '',
+      zip: business.zip || '',
+      phone: business.phone || '',
+      email: business.email || '',
+      website: business.website || '',
+      hours: business.hours || '',
+      image: business.image || '',
+      rating: business.rating || '0.0 (0)',
+      service_area: business.service_area || '',
+      business_type: business.business_type || 'physical',
+      verificationSubmitted: business.verificationSubmitted || business.verified || false,
+      verificationMethod: business.verificationMethod || '',
+      verificationDetails: business.verificationDetails || '',
       verification_document: business.verification_document || ''
     });
     setEditingBusiness(business);
     setShowBusinessForm(true);
-  };
-
-  const resetBusinessForm = () => {
-    setBusinessForm({
-      name: '',
-      category: '',
-      description: '',
-      address: '',
-      city: '',
-      state: '',
-      zip: '',
-      phone: '',
-      email: '',
-      website: '',
-      business_type: 'physical',
-      verification_document: ''
-    });
   };
 
   const toggleFavorite = (businessId) => {
@@ -300,38 +297,36 @@ function App() {
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
-    emailjs.sendForm('service_your_id', 'template_your_id', e.target, 'your_public_key')
-      .then(() => {
-        alert('Message sent successfully!');
-        e.target.reset();
-      })
-      .catch((error) => {
-        console.error('EmailJS error:', error);
-        alert('Failed to send message. Please try again.');
-      });
+    emailjs.sendForm(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, e.target, EMAILJS_CONFIG.PUBLIC_KEY)
+      .then(() => { alert('Message sent successfully!'); e.target.reset(); })
+      .catch(() => alert('Failed to send message. Please try again.'));
   };
 
-  const getBusinessTypeDisplay = (type) => {
-    switch (type) {
-      case 'physical': return '🏢 Physical';
-      case 'online': return '💻 Online';
-      case 'mobile': return '🚚 Mobile';
-      default: return '🏢 Physical';
-    }
+  const getDirectionsUrl = (business) => {
+    const addr = [business.address, business.city, business.state].filter(Boolean).join(', ');
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`;
   };
 
-  const getVerificationBadge = (status) => {
-    if (status === 'verified') {
-      return <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">✓ Verified</span>;
-    }
-    return null;
+  const isVerified = (b) => b.verificationSubmitted || b.verified || b.verification_status === 'verified';
+
+  const getCategoryDisplay = (b) => b.category || b.type || '';
+
+  const renderStars = (ratingStr) => {
+    if (!ratingStr) return null;
+    const num = parseFloat(ratingStr);
+    if (isNaN(num)) return null;
+    const full = Math.floor(num);
+    const stars = '⭐'.repeat(Math.min(full, 5));
+    return stars;
   };
 
+  // Loading screen
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
         <div className="text-center">
-          <img src="/logo.PNG" alt="Melanin Market" className="w-16 h-16 rounded-xl mx-auto mb-4 object-contain" />
+          <img src="/logo.PNG" alt="Melanin Market" className="w-16 h-16 rounded-xl mx-auto mb-4 object-contain"
+            onError={(e) => { e.target.style.display='none'; }} />
           <p className="text-amber-800 text-lg font-medium">Loading businesses...</p>
         </div>
       </div>
@@ -345,27 +340,23 @@ function App() {
       <header className="bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo + Title */}
             <div className="flex items-center space-x-3">
               <img
                 src="/logo.PNG"
                 alt="Melanin Market Logo"
                 className="w-12 h-12 rounded-lg object-contain bg-white p-1"
+                onError={(e) => { e.target.style.display='none'; }}
               />
               <div>
                 <h1 className="text-2xl font-extrabold tracking-wide">MELANIN MARKET</h1>
                 <p className="text-amber-100 text-xs">Discover • Support • Thrive</p>
               </div>
             </div>
-
-            {/* Right side: status + admin */}
             <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-1">
-                <div className={`w-2.5 h-2.5 rounded-full ${
-                  apiStatus === 'connected' ? 'bg-green-400' :
-                  apiStatus === 'error' ? 'bg-red-400' : 'bg-yellow-400'
-                }`}></div>
-              </div>
+              <div className={`w-2.5 h-2.5 rounded-full ${
+                apiStatus === 'connected' ? 'bg-green-400' :
+                apiStatus === 'error' ? 'bg-red-400' : 'bg-yellow-400'
+              }`}></div>
               {!isAdminAuthenticated ? (
                 <button
                   onClick={() => setShowAdminPanel(!showAdminPanel)}
@@ -398,16 +389,11 @@ function App() {
               className="px-3 py-2 border border-amber-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500"
               onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
             />
-            <button
-              onClick={handleAdminLogin}
-              className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 transition-colors"
-            >
+            <button onClick={handleAdminLogin}
+              className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 transition-colors">
               Login
             </button>
-            <button
-              onClick={() => setShowAdminPanel(false)}
-              className="text-amber-600 hover:text-amber-800"
-            >
+            <button onClick={() => setShowAdminPanel(false)} className="text-amber-600 hover:text-amber-800">
               Cancel
             </button>
           </div>
@@ -417,11 +403,11 @@ function App() {
       {/* ── ADMIN MANAGEMENT BAR ── */}
       {isAdminAuthenticated && (
         <div className="bg-green-100 border-l-4 border-green-500 p-4">
-          <div className="container mx-auto flex items-center justify-between">
+          <div className="container mx-auto flex items-center justify-between flex-wrap gap-3">
             <div>
               <h2 className="text-lg font-semibold text-green-800">Business Management</h2>
               <p className="text-green-600 text-sm">
-                GitHub API: {apiStatus === 'connected' ? 'CONNECTED' : 'ERROR'} • Changes saved directly to repository
+                API: {apiStatus === 'connected' ? '✅ CONNECTED' : '❌ ERROR'} • Changes saved to repository
               </p>
             </div>
             <div className="flex space-x-3">
@@ -431,10 +417,8 @@ function App() {
               >
                 <span>➕</span><span>Add New Business</span>
               </button>
-              <button
-                onClick={handleAdminLogout}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
-              >
+              <button onClick={handleAdminLogout}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors">
                 Logout
               </button>
             </div>
@@ -452,8 +436,6 @@ function App() {
             Support local entrepreneurs and build stronger communities together. Find authentic businesses owned by
             Black, Hispanic, Asian, Native American, and other minority entrepreneurs — both physical locations and online businesses.
           </p>
-
-          {/* City/State search */}
           <div className="max-w-lg mx-auto mb-4">
             <input
               type="text"
@@ -463,8 +445,6 @@ function App() {
               className="w-full px-5 py-3 rounded-2xl border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 text-gray-700"
             />
           </div>
-
-          {/* Find Businesses button */}
           <div className="max-w-lg mx-auto mb-3">
             <button
               onClick={() => setCurrentView('search')}
@@ -473,8 +453,6 @@ function App() {
               🔍 Find Businesses
             </button>
           </div>
-
-          {/* List Your Business button */}
           <div className="max-w-lg mx-auto">
             <button
               onClick={() => { resetBusinessForm(); setEditingBusiness(null); setShowBusinessForm(true); }}
@@ -489,7 +467,7 @@ function App() {
       {/* ── MAIN CONTENT ── */}
       <main className="container mx-auto px-4 py-6">
 
-        {/* Business Form Modal */}
+        {/* ── BUSINESS FORM MODAL ── */}
         {showBusinessForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
@@ -497,156 +475,178 @@ function App() {
                 {editingBusiness ? 'Edit Business' : 'Add New Business'}
               </h2>
               <form onSubmit={handleBusinessSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={businessForm.name}
-                      onChange={(e) => setBusinessForm({...businessForm, name: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-                    <select
-                      required
-                      value={businessForm.category}
-                      onChange={(e) => setBusinessForm({...businessForm, category: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    >
-                      <option value="">Select Category</option>
-                      {categories.slice(1).map(category => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <textarea
-                    value={businessForm.description}
-                    onChange={(e) => setBusinessForm({...businessForm, description: e.target.value})}
-                    rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Business Name *</label>
+                  <input type="text" required value={businessForm.name}
+                    onChange={(e) => setBusinessForm({...businessForm, name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                    <input
-                      type="text"
-                      value={businessForm.address}
-                      onChange={(e) => setBusinessForm({...businessForm, address: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                    <input
-                      type="text"
-                      value={businessForm.city}
-                      onChange={(e) => setBusinessForm({...businessForm, city: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                    <select
-                      value={businessForm.state}
-                      onChange={(e) => setBusinessForm({...businessForm, state: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    >
-                      <option value="">Select State</option>
-                      {states.slice(1).map(state => (
-                        <option key={state} value={state}>{state}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code</label>
-                    <input
-                      type="text"
-                      value={businessForm.zip}
-                      onChange={(e) => setBusinessForm({...businessForm, zip: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
-                    <select
-                      value={businessForm.business_type}
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Business Type *</label>
+                    <select required value={businessForm.business_type}
                       onChange={(e) => setBusinessForm({...businessForm, business_type: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    >
-                      <option value="physical">Physical Location</option>
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                      <option value="physical">Physical Location/Storefront</option>
                       <option value="online">Online Only</option>
                       <option value="mobile">Mobile Service</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Category *</label>
+                    <select required value={businessForm.category || businessForm.type}
+                      onChange={(e) => setBusinessForm({...businessForm, category: e.target.value, type: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                      <option value="">Select category</option>
+                      {allCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Owner Ethnicity *</label>
+                  <select required value={businessForm.owner}
+                    onChange={(e) => setBusinessForm({...businessForm, owner: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <option value="">Select owner ethnicity</option>
+                    <option value="Black-owned">Black-owned</option>
+                    <option value="Hispanic-owned">Hispanic-owned</option>
+                    <option value="Asian-owned">Asian-owned</option>
+                    <option value="Native American-owned">Native American-owned</option>
+                    <option value="Latino-owned">Latino-owned</option>
+                    <option value="Other minority-owned">Other minority-owned</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Description *</label>
+                  <textarea required value={businessForm.description} rows="3"
+                    onChange={(e) => setBusinessForm({...businessForm, description: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Address *</label>
+                  <input type="text" required value={businessForm.address}
+                    onChange={(e) => setBusinessForm({...businessForm, address: e.target.value})}
+                    placeholder="Street address"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input
-                      type="tel"
-                      value={businessForm.phone}
-                      onChange={(e) => setBusinessForm({...businessForm, phone: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    />
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">City *</label>
+                    <input type="text" required value={businessForm.city}
+                      onChange={(e) => setBusinessForm({...businessForm, city: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={businessForm.email}
-                      onChange={(e) => setBusinessForm({...businessForm, email: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    />
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">State *</label>
+                    <select required value={businessForm.state}
+                      onChange={(e) => setBusinessForm({...businessForm, state: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                      <option value="">Select State</option>
+                      {states.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                  <input
-                    type="url"
-                    value={businessForm.website}
-                    onChange={(e) => setBusinessForm({...businessForm, website: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Service Area</label>
+                  <input type="text" value={businessForm.service_area}
+                    onChange={(e) => setBusinessForm({...businessForm, service_area: e.target.value})}
+                    placeholder="Local area served"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Phone *</label>
+                    <input type="tel" required value={businessForm.phone}
+                      onChange={(e) => setBusinessForm({...businessForm, phone: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Email *</label>
+                    <input type="email" required value={businessForm.email}
+                      onChange={(e) => setBusinessForm({...businessForm, email: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Verification Document</label>
-                  <input
-                    type="text"
-                    value={businessForm.verification_document}
-                    onChange={(e) => setBusinessForm({...businessForm, verification_document: e.target.value})}
-                    placeholder="e.g., business-license - BL-2024-001234"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Website</label>
+                  <input type="url" value={businessForm.website}
+                    onChange={(e) => setBusinessForm({...businessForm, website: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
                 </div>
 
-                <div className="flex justify-end space-x-4 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => { setShowBusinessForm(false); setEditingBusiness(null); resetBusinessForm(); }}
-                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Hours</label>
+                  <textarea value={businessForm.hours} rows="2"
+                    onChange={(e) => setBusinessForm({...businessForm, hours: e.target.value})}
+                    placeholder="Mon-Fri: 9AM-6PM, etc."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Image URL</label>
+                  <input type="url" value={businessForm.image}
+                    onChange={(e) => setBusinessForm({...businessForm, image: e.target.value})}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Rating</label>
+                  <input type="text" value={businessForm.rating}
+                    onChange={(e) => setBusinessForm({...businessForm, rating: e.target.value})}
+                    placeholder="4.5 (123)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Verification Status</label>
+                  <select value={businessForm.verificationSubmitted ? 'verified' : 'unverified'}
+                    onChange={(e) => setBusinessForm({...businessForm, verificationSubmitted: e.target.value === 'verified'})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <option value="unverified">Not Verified</option>
+                    <option value="verified">Verified Business</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Verification Method</label>
+                  <select value={businessForm.verificationMethod}
+                    onChange={(e) => setBusinessForm({...businessForm, verificationMethod: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <option value="">Select verification method</option>
+                    <option value="business-license">Business License</option>
+                    <option value="ein">EIN Number</option>
+                    <option value="dba">DBA Certificate</option>
+                    <option value="other">Other Documentation</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Verification Details</label>
+                  <input type="text" value={businessForm.verificationDetails}
+                    onChange={(e) => setBusinessForm({...businessForm, verificationDetails: e.target.value})}
+                    placeholder="License number, EIN, or other verification info"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button type="submit" disabled={isSubmitting}
+                    className="flex-1 bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition-colors font-bold text-lg disabled:opacity-60">
+                    {isSubmitting ? 'Saving...' : (editingBusiness ? 'Update Business' : 'Add Business')}
                   </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
-                  >
-                    {editingBusiness ? 'Update Business' : 'Add Business'}
+                  <button type="button"
+                    onClick={() => { setShowBusinessForm(false); setEditingBusiness(null); resetBusinessForm(); }}
+                    className="flex-1 border-2 border-orange-500 text-orange-600 py-3 rounded-lg hover:bg-orange-500 hover:text-white transition-colors font-bold text-lg">
+                    Cancel
                   </button>
                 </div>
               </form>
@@ -654,180 +654,212 @@ function App() {
           </div>
         )}
 
-        {/* ── SEARCH VIEW FILTERS ── */}
+        {/* ── SEARCH VIEW ── */}
         {currentView === 'search' && (
           <div className="mb-6">
-            <div className="bg-white rounded-lg shadow-md p-5">
-              <h2 className="text-xl font-bold text-amber-800 mb-4">Search Businesses</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="lg:col-span-2">
-                  <input
-                    type="text"
-                    placeholder="Search by name, description..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+            <div className="flex items-center mb-4">
+              <button onClick={() => setCurrentView('home')}
+                className="flex items-center text-gray-600 hover:text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm mr-4">
+                ← Back
+              </button>
+              <h1 className="text-2xl font-bold text-gray-800">All Businesses</h1>
+            </div>
+
+            {/* Search bar */}
+            <div className="bg-white rounded-xl shadow-md p-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  placeholder="Search by name, description..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                >
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-                <select
-                  value={selectedState}
+                />
+                <select value={selectedState}
                   onChange={(e) => setSelectedState(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                >
-                  {states.map(state => (
-                    <option key={state} value={state}>{state === 'All' ? 'All States' : state}</option>
-                  ))}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                  <option value="All">All States</option>
+                  {states.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
-                <select
-                  value={selectedBusinessType}
+                <select value={selectedBusinessType}
                   onChange={(e) => setSelectedBusinessType(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                >
-                  {businessTypes.map(type => (
-                    <option key={type} value={type}>
-                      {type === 'All' ? 'All Types' : type === 'physical' ? 'Physical' : type === 'online' ? 'Online' : 'Mobile'}
-                    </option>
-                  ))}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                  <option value="All">All Types</option>
+                  <option value="physical">Physical</option>
+                  <option value="online">Online</option>
+                  <option value="mobile">Mobile</option>
                 </select>
               </div>
             </div>
+
+            {/* Category tabs */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {categoryTabs.map(cat => (
+                <button key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                    selectedCategory === cat
+                      ? 'bg-orange-500 text-white border-orange-500'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-orange-400'
+                  }`}>
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            <p className="text-sm text-gray-500 mb-4">{filteredBusinesses.length} businesses found</p>
           </div>
         )}
 
-        {/* ── BUSINESS STATISTICS ── */}
-        {(currentView === 'home' || currentView === 'search' || currentView === 'favorites') && (
-          <div className="mb-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg shadow-md p-4 text-center border-t-4 border-amber-500">
-                <div className="text-2xl font-bold text-amber-600">{businesses.length}</div>
-                <div className="text-sm text-gray-600">Total Businesses</div>
-              </div>
-              <div className="bg-white rounded-lg shadow-md p-4 text-center border-t-4 border-green-500">
-                <div className="text-2xl font-bold text-green-600">
-                  {businesses.filter(b => b.verification_status === 'verified').length}
-                </div>
-                <div className="text-sm text-gray-600">Verified</div>
-              </div>
-              <div className="bg-white rounded-lg shadow-md p-4 text-center border-t-4 border-blue-500">
-                <div className="text-2xl font-bold text-blue-600">
-                  {businesses.filter(b => b.business_type === 'physical').length}
-                </div>
-                <div className="text-sm text-gray-600">Physical</div>
-              </div>
-              <div className="bg-white rounded-lg shadow-md p-4 text-center border-t-4 border-purple-500">
-                <div className="text-2xl font-bold text-purple-600">
-                  {businesses.filter(b => b.business_type === 'online').length}
-                </div>
-                <div className="text-sm text-gray-600">Online</div>
-              </div>
-            </div>
+        {/* ── FAVORITES VIEW HEADER ── */}
+        {currentView === 'favorites' && (
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold text-gray-800">Your Favorites</h1>
+            <p className="text-sm text-gray-500 mt-1">{filteredBusinesses.length} saved businesses</p>
           </div>
         )}
 
         {/* ── BUSINESS LISTINGS ── */}
         {(currentView === 'home' || currentView === 'search' || currentView === 'favorites') && (
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-gray-800">
-                {currentView === 'favorites' ? 'Your Favorites' : 'Current Businesses'}
-              </h2>
-              <div className="text-sm text-gray-600">
-                Showing {filteredBusinesses.length} of {businesses.length} businesses
+            {currentView === 'home' && (
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-800">Current Businesses</h2>
+                <span className="text-sm text-gray-500">Showing {filteredBusinesses.length} of {businesses.length}</span>
               </div>
-            </div>
+            )}
 
             {filteredBusinesses.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-16">
                 <div className="text-6xl mb-4">🏪</div>
                 <h3 className="text-xl font-semibold text-gray-600 mb-2">
                   {currentView === 'favorites' ? 'No favorites yet' : 'No businesses found'}
                 </h3>
                 <p className="text-gray-500">
                   {currentView === 'favorites'
-                    ? 'Start adding businesses to your favorites!'
-                    : 'Try adjusting your search criteria.'}
+                    ? 'Tap the heart on any business to save it here.'
+                    : 'Try adjusting your search or filters.'}
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-6">
                 {filteredBusinesses.map((business) => (
-                  <div key={business.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow border border-amber-100">
-                    {/* Card header */}
-                    <div className="bg-gradient-to-r from-amber-600 to-orange-500 rounded-t-xl px-5 py-4 flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-bold text-white">{business.name}</h3>
-                        {business.category && (
-                          <span className="text-xs bg-white bg-opacity-20 text-white px-2 py-0.5 rounded-full mt-1 inline-block">
-                            {business.category}
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => toggleFavorite(business.id)}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                          favorites.includes(business.id)
-                            ? 'bg-red-500 text-white'
-                            : 'bg-white bg-opacity-20 text-white hover:bg-red-500'
-                        }`}
-                      >
-                        ❤️
-                      </button>
-                    </div>
+                  <div key={business.id} className="bg-white rounded-2xl shadow-md overflow-hidden border border-amber-100">
 
-                    {/* Card body */}
+                    {/* Business image */}
+                    {business.image && (
+                      <img
+                        src={business.image}
+                        alt={business.name}
+                        className="w-full h-48 object-cover"
+                        onError={(e) => { e.target.style.display='none'; }}
+                      />
+                    )}
+
                     <div className="p-5">
-                      <div className="space-y-1 mb-3 text-sm text-gray-600">
-                        <div><span className="font-medium">Type:</span> {getBusinessTypeDisplay(business.business_type)}</div>
-                        {business.city && business.state && (
-                          <div><span className="font-medium">Location:</span> {business.city}, {business.state}</div>
-                        )}
-                        {getVerificationBadge(business.verification_status)}
+                      {/* Name + verified badge */}
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-xl font-bold text-gray-900">{business.name}</h3>
+                          {isVerified(business) && (
+                            <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                              🏆 Verified Business
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => toggleFavorite(business.id)}
+                          className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ml-2 ${
+                            favorites.includes(business.id) ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-400 hover:bg-red-100'
+                          }`}
+                        >
+                          ❤️
+                        </button>
                       </div>
 
-                      {business.description && (
-                        <p className="text-gray-600 text-sm mb-4 line-clamp-3">{business.description}</p>
+                      {/* Category tag */}
+                      {getCategoryDisplay(business) && (
+                        <span className="inline-block bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full mb-3">
+                          {getCategoryDisplay(business)}
+                        </span>
                       )}
 
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {business.phone && (
-                          <a href={`tel:${business.phone}`} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200 transition-colors">
-                            📞 Call
-                          </a>
-                        )}
-                        {business.email && (
-                          <a href={`mailto:${business.email}`} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200 transition-colors">
-                            ✉️ Email
-                          </a>
-                        )}
-                        {business.website && (
-                          <a href={business.website} target="_blank" rel="noopener noreferrer" className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded hover:bg-purple-200 transition-colors">
-                            🌐 Website
-                          </a>
-                        )}
-                      </div>
+                      {/* Description */}
+                      {business.description && (
+                        <p className="text-gray-600 text-sm mb-3">{business.description}</p>
+                      )}
 
+                      {/* Rating */}
+                      {business.rating && (
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-base">{renderStars(business.rating)}</span>
+                          <span className="text-amber-700 font-semibold text-sm">{business.rating}</span>
+                        </div>
+                      )}
+
+                      {/* Address with directions */}
+                      {business.address && (
+                        <div className="mb-1">
+                          <a
+                            href={getDirectionsUrl(business)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-orange-600 hover:text-orange-800 underline"
+                          >
+                            📍 {[business.address, business.city, business.state].filter(Boolean).join(', ')} (Get Directions)
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Service area */}
+                      {business.service_area && (
+                        <div className="text-sm text-gray-600 mb-1">🗺️ Service Area: {business.service_area}</div>
+                      )}
+
+                      {/* Phone */}
+                      {business.phone && (
+                        <div className="text-sm text-gray-600 mb-1">
+                          <a href={`tel:${business.phone}`} className="hover:text-orange-600">📞 {business.phone}</a>
+                        </div>
+                      )}
+
+                      {/* Hours */}
+                      {business.hours && (
+                        <div className="text-sm text-gray-600 mb-1">🕒 {business.hours}</div>
+                      )}
+
+                      {/* Website */}
+                      {business.website && (
+                        <div className="text-sm mb-3">
+                          <a href={business.website} target="_blank" rel="noopener noreferrer"
+                            className="text-orange-600 hover:text-orange-800 underline">
+                            🌐 {business.website}
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Add to Favorites button */}
+                      <button
+                        onClick={() => toggleFavorite(business.id)}
+                        className={`w-full py-3 rounded-xl font-bold text-base transition-colors mt-2 ${
+                          favorites.includes(business.id)
+                            ? 'bg-red-500 hover:bg-red-600 text-white'
+                            : 'bg-orange-500 hover:bg-orange-600 text-white'
+                        }`}
+                      >
+                        {favorites.includes(business.id) ? '❤️ Remove from Favorites' : '🤍 Add to Favorites'}
+                      </button>
+
+                      {/* Admin edit/delete */}
                       {isAdminAuthenticated && (
-                        <div className="flex space-x-2 pt-3 border-t border-gray-100">
-                          <button
-                            onClick={() => handleEditBusiness(business)}
-                            className="flex-1 bg-yellow-500 text-white px-3 py-1.5 rounded text-sm hover:bg-yellow-600 transition-colors"
-                          >
-                            Edit
+                        <div className="flex space-x-2 pt-3 border-t border-gray-100 mt-3">
+                          <button onClick={() => handleEditBusiness(business)}
+                            className="flex-1 bg-yellow-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-yellow-600 transition-colors font-medium">
+                            ✏️ Edit
                           </button>
-                          <button
-                            onClick={() => handleDeleteBusiness(business)}
-                            className="flex-1 bg-red-500 text-white px-3 py-1.5 rounded text-sm hover:bg-red-600 transition-colors"
-                          >
-                            Delete
+                          <button onClick={() => handleDeleteBusiness(business)}
+                            className="flex-1 bg-red-500 text-white px-3 py-2 rounded-lg text-sm hover:bg-red-600 transition-colors font-medium">
+                            🗑️ Delete
                           </button>
                         </div>
                       )}
@@ -842,50 +874,50 @@ function App() {
         {/* ── PROFILE / CONTACT VIEW ── */}
         {currentView === 'profile' && (
           <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-lg shadow-md p-8">
+            <div className="bg-white rounded-2xl shadow-md p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Contact Us</h2>
-              <form onSubmit={handleContactSubmit} className="space-y-6">
+              <form onSubmit={handleContactSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
                   <input type="text" name="from_name" required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
                   <input type="email" name="from_email" required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Subject</label>
                   <input type="text" name="subject" required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Message</label>
                   <textarea name="message" required rows="5"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
                 </div>
                 <button type="submit"
-                  className="w-full bg-amber-600 text-white py-3 px-4 rounded-lg hover:bg-amber-700 transition-colors font-medium">
+                  className="w-full bg-orange-500 text-white py-3 px-4 rounded-xl hover:bg-orange-600 transition-colors font-bold text-lg">
                   Send Message
                 </button>
               </form>
             </div>
           </div>
         )}
+
       </main>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-gray-800 text-white py-8 mt-8">
+      <footer className="bg-amber-900 text-amber-100 py-8 mt-8">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center space-x-3 mb-3">
-            <img src="/logo.PNG" alt="Melanin Market" className="w-8 h-8 rounded-md object-contain bg-white p-0.5" />
-            <span className="text-xl font-bold">Melanin Market</span>
+            <img src="/logo.PNG" alt="Melanin Market" className="w-8 h-8 rounded-md object-contain bg-white p-0.5"
+              onError={(e) => { e.target.style.display='none'; }} />
+            <span className="text-xl font-bold text-white">Melanin Market</span>
           </div>
-          <p className="text-gray-400 mb-3 text-sm">
-            Supporting and celebrating Black-owned businesses across America
-          </p>
-          <div className="text-sm text-gray-500">
+          <p className="text-amber-200 mb-3 text-sm">Supporting and celebrating minority-owned businesses across America</p>
+          <div className="text-sm text-amber-300">
             <p>© 2024 Melanin Market. All rights reserved.</p>
             <p className="mt-1">Powered by GitHub • {businesses.length} businesses and growing</p>
           </div>
@@ -901,15 +933,10 @@ function App() {
             { view: 'favorites', icon: '❤️', label: 'Favorites' },
             { view: 'profile', icon: '👤', label: 'Profile' },
           ].map(({ view, icon, label }) => (
-            <button
-              key={view}
-              onClick={() => setCurrentView(view)}
+            <button key={view} onClick={() => setCurrentView(view)}
               className={`flex flex-col items-center justify-center py-3 text-xs font-medium transition-colors ${
-                currentView === view
-                  ? 'text-orange-500'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
+                currentView === view ? 'text-orange-500' : 'text-gray-500 hover:text-gray-700'
+              }`}>
               <span className="text-xl mb-0.5">{icon}</span>
               {label}
             </button>
