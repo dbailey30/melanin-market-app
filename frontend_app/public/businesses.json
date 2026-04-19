@@ -166,32 +166,5 @@
     "verificationSubmitted": true,
     "verificationMethod": "business-license",
     "verificationDetails": "BL-2024-ESO789"
-  },
-  {
-    "name": "C.H.A.O.S. Unlimited, Inc.",
-    "type": "Retail",
-    "owner": "Black-owned",
-    "category": "Retail",
-    "description": "C.H.A.O.S. (Creating History Amongst Our Society) is not just a brand. It is a movement built by someone who refused to let the system define his story.",
-    "address": "n/a",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "",
-    "phone": "585-524-7145",
-    "email": "Support@chaosunlimited.net",
-    "website": "https://www.chaosunlimited.net",
-    "hours": "Mon.-Sun.; 24/7",
-    "image": "",
-    "rating": "4.6 (327)",
-    "service_area": "",
-    "business_type": "online",
-    "verificationSubmitted": true,
-    "verificationMethod": "ein",
-    "verificationDetails": "83-4197536",
-    "verification_document": "",
-    "id": 8,
-    "dateAdded": "2026-04-19",
-    "status": "approved",
-    "verified": true
   }
 ]
