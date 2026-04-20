@@ -1008,13 +1008,13 @@ function App() {
             {/* Feature Cards */}
             <div className="bg-white rounded-2xl shadow-md p-8 text-center">
               <div className="text-4xl mb-3">🔍</div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Discover Local &amp; Online</h3>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Discover Local & Online</h3>
               <p className="text-gray-500 text-sm">Find authentic minority-owned businesses in your community and online, from restaurants and cafes to tech companies and e-commerce stores.</p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-md p-8 text-center">
               <div className="text-4xl mb-3">🤝</div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Support &amp; Save</h3>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Support & Save</h3>
               <p className="text-gray-500 text-sm">Save your favorite businesses and support entrepreneurs who are building stronger, more diverse communities both locally and globally.</p>
             </div>
 
