@@ -33,7 +33,6 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   // Admin business form state
   const [businessForm, setBusinessForm] = useState({
@@ -71,7 +70,6 @@ function App() {
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowInstallPrompt(true);
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -80,8 +78,7 @@ function App() {
   const handleInstallApp = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') setShowInstallPrompt(false);
+      await deferredPrompt.userChoice;
       setDeferredPrompt(null);
     }
   };
@@ -1292,3 +1289,4 @@ function App() {
 }
 
 export default App;
+How to Fix GitHub Integration in Melanin Market? - Manus
