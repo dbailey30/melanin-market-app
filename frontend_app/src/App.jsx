@@ -575,6 +575,14 @@ function App() {
               + List Your Business
             </button>
           </div>
+          <div className="max-w-lg mx-auto mt-3">
+            <button
+              onClick={handleInstallApp}
+              className="w-full bg-transparent border-2 border-amber-400 text-amber-600 hover:bg-amber-400 hover:text-white font-bold py-3 rounded-2xl transition-colors text-lg"
+            >
+              📲 Install App
+            </button>
+          </div>
         </section>
       )}
 
