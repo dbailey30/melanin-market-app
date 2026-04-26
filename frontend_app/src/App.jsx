@@ -33,6 +33,7 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   // Admin business form state
   const [businessForm, setBusinessForm] = useState({
@@ -81,6 +82,8 @@ function App() {
       deferredPrompt.prompt();
       await deferredPrompt.userChoice;
       setDeferredPrompt(null);
+    } else {
+      setShowInstallModal(true);
     }
   };
 
@@ -389,6 +392,39 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 pb-20">
+
+      {/* ── INSTALL APP MODAL ── */}
+      {showInstallModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+            <div className="text-center mb-4">
+              <span className="text-4xl">📱</span>
+              <h2 className="text-xl font-bold text-gray-800 mt-2">Install Melanin Market</h2>
+              <p className="text-gray-500 text-sm mt-1">Add to your home screen for quick access</p>
+            </div>
+            <div className="space-y-3">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <p className="font-semibold text-amber-800 text-sm">📱 iPhone / iPad (Safari)</p>
+                <p className="text-gray-600 text-xs mt-1">Tap the <strong>Share</strong> button (box with arrow) at the bottom → then tap <strong>"Add to Home Screen"</strong></p>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <p className="font-semibold text-amber-800 text-sm">🤖 Android (Chrome)</p>
+                <p className="text-gray-600 text-xs mt-1">Tap the <strong>menu (⋮)</strong> in the top right → tap <strong>"Add to Home Screen"</strong> or <strong>"Install App"</strong></p>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <p className="font-semibold text-amber-800 text-sm">💻 Desktop (Chrome / Edge)</p>
+                <p className="text-gray-600 text-xs mt-1">Look for the <strong>install icon (⊕)</strong> in the address bar on the right side and click it</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowInstallModal(false)}
+              className="mt-4 w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-3 rounded-xl"
+            >
+              Got it!
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── HEADER ── */}
       <header className="bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg">
