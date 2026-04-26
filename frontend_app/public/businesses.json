@@ -190,32 +190,5 @@
     "verificationDetails": "83-4197536",
     "verification_document": "",
     "id": 8
-  },
-  {
-    "name": "PURE DIVA, LLC.",
-    "type": "Beauty",
-    "owner": "Black-owned",
-    "category": "Beauty",
-    "description": "Curated and exclusive high-end virgin hair extensions for the everyday woman.",
-    "address": "",
-    "city": "",
-    "state": "",
-    "zip": "",
-    "phone": "516-782-4725",
-    "email": "puredivallc@gmail.com",
-    "website": "https://puredivallc.com",
-    "hours": "Online Shopping 24/7",
-    "image": "",
-    "rating": "0.0 (0)",
-    "service_area": "",
-    "business_type": "online",
-    "verificationSubmitted": false,
-    "verificationMethod": "",
-    "verificationDetails": "",
-    "verification_document": "",
-    "id": 9,
-    "dateAdded": "2026-04-26",
-    "status": "approved",
-    "verified": true
   }
 ]
