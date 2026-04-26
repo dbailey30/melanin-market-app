@@ -1289,4 +1289,3 @@ function App() {
 }
 
 export default App;
-How to Fix GitHub Integration in Melanin Market? - Manus
