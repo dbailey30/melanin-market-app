@@ -9,6 +9,7 @@ const ADMIN_PASSWORD = 'melanin2025admin';
 const EMAILJS_CONFIG = {
   SERVICE_ID: 'service_l1mf75l',
   TEMPLATE_ID: 'template_1zwylhd',
+  CONFIRMATION_TEMPLATE_ID: 'template_confirmation',
   PUBLIC_KEY: 'jv0z8LO2xSTdzuvDz'
 };
 
@@ -296,12 +297,35 @@ function App() {
     };
 
     try {
+      // Send admin notification
       await emailjs.send(
         EMAILJS_CONFIG.SERVICE_ID,
         EMAILJS_CONFIG.TEMPLATE_ID,
         templateParams,
         EMAILJS_CONFIG.PUBLIC_KEY
       );
+
+      // Send owner confirmation email
+      const confirmationParams = {
+        to_email: publicForm.email,
+        to_name: publicForm.owner || 'Business Owner',
+        business_name: publicForm.name,
+        reply_to: 'admin@melanin-market.com',
+        message: `Thank you for submitting ${publicForm.name} to Melanin Market. We have received your submission and it is currently under review by our team. You will receive a follow-up email once your business has been approved and added to our directory. We appreciate your interest in joining our community of minority-owned businesses.\n\nIf you have any questions in the meantime, please feel free to reach out to us at admin@melanin-market.com.\n\nWarm regards,\nThe Melanin Market Team`
+      };
+
+      try {
+        await emailjs.send(
+          EMAILJS_CONFIG.SERVICE_ID,
+          EMAILJS_CONFIG.CONFIRMATION_TEMPLATE_ID,
+          confirmationParams,
+          EMAILJS_CONFIG.PUBLIC_KEY
+        );
+      } catch (confirmErr) {
+        // Confirmation email failure is non-blocking
+        console.warn('Confirmation email failed:', confirmErr);
+      }
+
       setSubmitSuccess(true);
       resetPublicForm();
     } catch (error) {
