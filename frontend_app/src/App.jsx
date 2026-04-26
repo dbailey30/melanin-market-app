@@ -48,6 +48,7 @@ function App() {
     name: '', business_type: 'physical', category: '', owner: '',
     description: '', address: '', city: '', state: '', service_area: '',
     phone: '', email: '', website: '', hours: '', image: '',
+    business_base: '', logo_url: '',
     verificationMethod: '', verificationDetails: ''
   });
 
@@ -233,6 +234,7 @@ function App() {
       name: '', business_type: 'physical', category: '', owner: '',
       description: '', address: '', city: '', state: '', service_area: '',
       phone: '', email: '', website: '', hours: '', image: '',
+      business_base: '', logo_url: '',
       verificationMethod: '', verificationDetails: ''
     });
   };
@@ -544,7 +546,7 @@ function App() {
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
                       <h2 className="text-2xl font-bold text-gray-800">Add Your Business</h2>
                       <p className="text-gray-500 text-sm mt-1">
@@ -557,6 +559,24 @@ function App() {
                       className="text-gray-400 hover:text-gray-600 text-2xl font-bold ml-4"
                     >
                       ✕
+                    </button>
+                  </div>
+
+                  {/* Install App Banner */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">📱</span>
+                      <div>
+                        <p className="font-semibold text-amber-800 text-sm">Install Melanin Market</p>
+                        <p className="text-amber-600 text-xs">Add to your home screen for quick access</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleInstallApp}
+                      className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-orange-600 transition-colors whitespace-nowrap"
+                    >
+                      Install App
                     </button>
                   </div>
 
@@ -612,6 +632,19 @@ function App() {
                         onChange={(e) => setPublicForm({...publicForm, description: e.target.value})}
                         placeholder="Tell customers about your business..."
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                    </div>
+
+                    {/* Business Base — auto-filled for online businesses */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Business Base (Optional)</label>
+                      <input
+                        type="text"
+                        value={publicForm.business_type === 'online' ? 'Online Business' : publicForm.business_base}
+                        onChange={(e) => setPublicForm({...publicForm, business_base: e.target.value})}
+                        readOnly={publicForm.business_type === 'online'}
+                        placeholder={publicForm.business_type === 'mobile' ? 'e.g., Buffalo, NY' : 'e.g., Buffalo, NY'}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${publicForm.business_type === 'online' ? 'bg-amber-50 text-amber-800 font-semibold' : ''}`}
+                      />
                     </div>
 
                     {/* Address — only required for physical */}
@@ -689,6 +722,19 @@ function App() {
                         onChange={(e) => setPublicForm({...publicForm, hours: e.target.value})}
                         placeholder="Mon-Fri: 9AM-6PM, Sat: 10AM-4PM, Sun: Closed"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                    </div>
+
+                    {/* Business Logo / Photo */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Business Logo or Photo URL (Optional)</label>
+                      <input
+                        type="url"
+                        value={publicForm.logo_url}
+                        onChange={(e) => setPublicForm({...publicForm, logo_url: e.target.value, image: e.target.value})}
+                        placeholder="https://yourwebsite.com/logo.png"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Paste a direct link to your business logo or photo image</p>
                     </div>
 
                     {/* Business Verification Section */}
