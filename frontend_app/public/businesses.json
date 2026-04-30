@@ -190,5 +190,32 @@
     "verificationDetails": "83-4197536",
     "verification_document": "",
     "id": 8
+  },
+  {
+    "name": "Kottage Kitchen",
+    "type": "Other",
+    "owner": "Black-owned",
+    "category": "Other",
+    "description": "Kottage Kitchen is a Luxury Intimate Event business that specializes in date nights, anniversaries, and celebrations.  With culinary innovation and curated set-ups, we bring intimacy to a whole new level.  ",
+    "address": "",
+    "city": "Houston",
+    "state": "TX",
+    "zip": "",
+    "phone": "832-713-6719",
+    "email": "channinghightower@kkpiknix.com",
+    "website": "https://www.kkpiknix.com",
+    "hours": "Friday: Online inquiries: 9-5 PM; Saturday: 8-8 PM; Sunday: 8-8 PM",
+    "image": "",
+    "rating": "0.0 (0)",
+    "service_area": "Houston Metro Area",
+    "business_type": "mobile",
+    "verificationSubmitted": true,
+    "verificationMethod": "ein",
+    "verificationDetails": "86-3455174",
+    "verification_document": "",
+    "id": 9,
+    "dateAdded": "2026-04-30",
+    "status": "approved",
+    "verified": true
   }
 ]
