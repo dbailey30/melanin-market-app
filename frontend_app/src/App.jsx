@@ -361,7 +361,7 @@ function App() {
       rating: business.rating || '0.0 (0)',
       service_area: business.service_area || '',
       business_type: business.business_type || 'physical',
-      verificationSubmitted: business.verificationSubmitted || business.verified || false,
+      verificationSubmitted: business.verificationSubmitted || false,
       verificationMethod: business.verificationMethod || '',
       verificationDetails: business.verificationDetails || '',
       verification_document: business.verification_document || ''
@@ -390,7 +390,7 @@ function App() {
     return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`;
   };
 
-  const isVerified = (b) => b.verificationSubmitted || b.verified || b.verification_status === 'verified';
+  const isVerified = (b) => b.verified === true;
   const getCategoryDisplay = (b) => b.category || b.type || '';
 
   const renderStars = (ratingStr) => {
