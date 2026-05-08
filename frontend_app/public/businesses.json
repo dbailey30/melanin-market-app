@@ -17,6 +17,7 @@
     "rating": "4.6 (327)",
     "service_area": "Online Business",
     "business_type": "online",
+    "verified": true,
     "verificationSubmitted": true,
     "verificationMethod": "ein",
     "verificationDetails": "83-4197536",
