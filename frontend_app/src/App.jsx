@@ -1208,16 +1208,13 @@ function App() {
                       </div>
 
                       {/* Ownership badge */}
-                      {business.owner && (() => {
-                        const badge = getOwnerBadge(business.owner);
-                        return badge ? (
-                          <div className="mb-2">
-                            <span className={`inline-flex items-center gap-1 ${badge.bg} ${badge.text} text-xs font-bold px-3 py-1 rounded-full`}>
-                              {badge.emoji} {badge.label}
-                            </span>
-                          </div>
-                        ) : null;
-                      })()}
+                      {business.owner && getOwnerBadge(business.owner) && (
+                        <div className="mb-2">
+                          <span className={`inline-flex items-center gap-1 ${getOwnerBadge(business.owner).bg} ${getOwnerBadge(business.owner).text} text-xs font-bold px-3 py-1 rounded-full`}>
+                            {getOwnerBadge(business.owner).emoji} {getOwnerBadge(business.owner).label}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Category tag */}
                       {getCategoryDisplay(business) && (
