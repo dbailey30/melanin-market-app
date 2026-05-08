@@ -49,5 +49,32 @@
     "dateAdded": "2026-04-30",
     "status": "approved",
     "verified": true
+  },
+  {
+    "name": "SSS Auto Sales and Service",
+    "type": "Services",
+    "owner": "Black-owned",
+    "category": "Services",
+    "description": "Auto Mechanic, Collision, Detail, Wheels and Tires, Car Audio",
+    "address": "555 Child St.",
+    "city": "Rochester",
+    "state": "NY",
+    "zip": "",
+    "phone": "585-481-1277",
+    "email": "laqtate15@yahoo.com",
+    "website": "",
+    "hours": "Mon. - Fri. 10 AM - 6 PM",
+    "image": "",
+    "rating": "0.0 (0)",
+    "service_area": "Rochester, NY",
+    "business_type": "physical",
+    "verificationSubmitted": false,
+    "verificationMethod": "",
+    "verificationDetails": "",
+    "verification_document": "",
+    "id": 10,
+    "dateAdded": "2026-05-08",
+    "status": "approved",
+    "verified": true
   }
 ]
