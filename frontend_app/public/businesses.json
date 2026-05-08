@@ -41,14 +41,11 @@
     "rating": "0.0 (0)",
     "service_area": "Houston Metro Area",
     "business_type": "mobile",
-    "verificationSubmitted": false,
+    "verificationSubmitted": true,
     "verificationMethod": "ein",
     "verificationDetails": "86-3455174",
     "verification_document": "",
-    "id": 9,
-    "dateAdded": "2026-04-30",
-    "status": "approved",
-    "verified": false
+    "id": 9
   },
   {
     "name": "SSS Auto Sales and Service",
