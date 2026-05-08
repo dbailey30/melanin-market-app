@@ -394,6 +394,23 @@ function App() {
   const isVerified = (b) => b.verified === true;
   const getCategoryDisplay = (b) => b.category || b.type || '';
 
+  const getOwnerBadge = (owner) => {
+    if (!owner) return null;
+    const map = {
+      'Black-owned':            { bg: 'bg-purple-700',   text: 'text-white',        emoji: '✊🏾' },
+      'Hispanic-owned':         { bg: 'bg-green-600',    text: 'text-white',        emoji: '🌟' },
+      'Asian-owned':            { bg: 'bg-red-600',      text: 'text-white',        emoji: '🌸' },
+      'Native American-owned':  { bg: 'bg-orange-700',   text: 'text-white',        emoji: '🦅' },
+      'Middle Eastern-owned':   { bg: 'bg-teal-600',     text: 'text-white',        emoji: '🌙' },
+      'Pacific Islander-owned': { bg: 'bg-cyan-600',     text: 'text-white',        emoji: '🌊' },
+      'Multi-ethnic owned':     { bg: 'bg-indigo-600',   text: 'text-white',        emoji: '🤝🏾' },
+      'Women-owned':            { bg: 'bg-pink-500',     text: 'text-white',        emoji: '👑' },
+      'Veteran-owned':          { bg: 'bg-gray-700',     text: 'text-white',        emoji: '🎖️' },
+    };
+    const style = map[owner] || { bg: 'bg-amber-600', text: 'text-white', emoji: '🏪' };
+    return { ...style, label: owner };
+  };
+
   const renderStars = (ratingStr) => {
     if (!ratingStr) return null;
     const num = parseFloat(ratingStr);
@@ -1189,6 +1206,18 @@ function App() {
                           ❤️
                         </button>
                       </div>
+
+                      {/* Ownership badge */}
+                      {business.owner && (() => {
+                        const badge = getOwnerBadge(business.owner);
+                        return badge ? (
+                          <div className="mb-2">
+                            <span className={`inline-flex items-center gap-1 ${badge.bg} ${badge.text} text-xs font-bold px-3 py-1 rounded-full`}>
+                              {badge.emoji} {badge.label}
+                            </span>
+                          </div>
+                        ) : null;
+                      })()}
 
                       {/* Category tag */}
                       {getCategoryDisplay(business) && (
