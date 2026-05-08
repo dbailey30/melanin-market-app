@@ -17,11 +17,12 @@
     "rating": "4.6 (327)",
     "service_area": "Online Business",
     "business_type": "online",
-    "verificationSubmitted": true,
+    "verificationSubmitted": false,
     "verificationMethod": "ein",
     "verificationDetails": "83-4197536",
     "verification_document": "",
-    "id": 8
+    "id": 8,
+    "verified": false
   },
   {
     "name": "Kottage Kitchen",
@@ -41,14 +42,14 @@
     "rating": "0.0 (0)",
     "service_area": "Houston Metro Area",
     "business_type": "mobile",
-    "verificationSubmitted": true,
+    "verificationSubmitted": false,
     "verificationMethod": "ein",
     "verificationDetails": "86-3455174",
     "verification_document": "",
     "id": 9,
     "dateAdded": "2026-04-30",
     "status": "approved",
-    "verified": true
+    "verified": false
   },
   {
     "name": "SSS Auto Sales and Service",
@@ -75,6 +76,6 @@
     "id": 10,
     "dateAdded": "2026-05-08",
     "status": "approved",
-    "verified": true
+    "verified": false
   }
 ]
