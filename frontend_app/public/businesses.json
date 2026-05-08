@@ -42,6 +42,7 @@
     "rating": "3.7 (137)",
     "service_area": "Houston Metro Area",
     "business_type": "mobile",
+    "verified": true,
     "verificationSubmitted": true,
     "verificationMethod": "ein",
     "verificationDetails": "86-3455174",
