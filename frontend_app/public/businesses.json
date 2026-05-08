@@ -62,16 +62,13 @@
     "website": "",
     "hours": "Mon. - Fri. 10 AM - 6 PM",
     "image": "",
-    "rating": "0.0 (0)",
+    "rating": "3.4 (198)",
     "service_area": "Rochester, NY",
     "business_type": "physical",
     "verificationSubmitted": false,
     "verificationMethod": "",
     "verificationDetails": "",
     "verification_document": "",
-    "id": 10,
-    "dateAdded": "2026-05-08",
-    "status": "approved",
-    "verified": false
+    "id": 10
   }
 ]
