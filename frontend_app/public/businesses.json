@@ -17,12 +17,11 @@
     "rating": "4.6 (327)",
     "service_area": "Online Business",
     "business_type": "online",
-    "verificationSubmitted": false,
+    "verificationSubmitted": true,
     "verificationMethod": "ein",
     "verificationDetails": "83-4197536",
     "verification_document": "",
-    "id": 8,
-    "verified": false
+    "id": 8
   },
   {
     "name": "Kottage Kitchen",
