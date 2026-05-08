@@ -41,7 +41,7 @@ function App() {
     name: '', type: '', owner: '', category: '', description: '',
     address: '', city: '', state: '', zip: '', phone: '', email: '',
     website: '', hours: '', image: '', rating: '0.0 (0)', service_area: '',
-    business_type: 'physical', verificationSubmitted: false,
+    business_type: 'physical', verified: false, verificationSubmitted: false,
     verificationMethod: '', verificationDetails: '', verification_document: ''
   });
 
@@ -228,7 +228,7 @@ function App() {
       name: '', type: '', owner: '', category: '', description: '',
       address: '', city: '', state: '', zip: '', phone: '', email: '',
       website: '', hours: '', image: '', rating: '0.0 (0)', service_area: '',
-      business_type: 'physical', verificationSubmitted: false,
+      business_type: 'physical', verified: false, verificationSubmitted: false,
       verificationMethod: '', verificationDetails: '', verification_document: ''
     });
   };
@@ -361,6 +361,7 @@ function App() {
       rating: business.rating || '0.0 (0)',
       service_area: business.service_area || '',
       business_type: business.business_type || 'physical',
+      verified: business.verified === true,
       verificationSubmitted: business.verificationSubmitted || false,
       verificationMethod: business.verificationMethod || '',
       verificationDetails: business.verificationDetails || '',
@@ -990,11 +991,11 @@ function App() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Verification Status</label>
-                  <select value={businessForm.verificationSubmitted ? 'verified' : 'unverified'}
-                    onChange={(e) => setBusinessForm({...businessForm, verificationSubmitted: e.target.value === 'verified'})}
+                  <select value={businessForm.verified ? 'verified' : 'unverified'}
+                    onChange={(e) => setBusinessForm({...businessForm, verified: e.target.value === 'verified', verificationSubmitted: e.target.value === 'verified'})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
                     <option value="unverified">Not Verified</option>
-                    <option value="verified">Verified Business</option>
+                    <option value="verified">✅ Verified Business</option>
                   </select>
                 </div>
 
