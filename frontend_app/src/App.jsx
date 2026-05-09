@@ -1178,12 +1178,14 @@ function App() {
 
                     {/* Business image */}
                     {business.image && (
-                      <img
-                        src={business.image}
-                        alt={business.name}
-                        className="w-full h-48 object-cover"
-                        onError={(e) => { e.target.style.display='none'; }}
-                      />
+                      <div className="w-full h-48 bg-white flex items-center justify-center overflow-hidden">
+                        <img
+                          src={business.image}
+                          alt={business.name}
+                          className="w-full h-full object-contain p-3"
+                          onError={(e) => { e.target.parentElement.style.display='none'; }}
+                        />
+                      </div>
                     )}
 
                     <div className="p-5">
