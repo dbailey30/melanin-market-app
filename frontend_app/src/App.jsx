@@ -184,11 +184,18 @@ function App() {
       );
     }
     if (citySearch) {
-      filtered = filtered.filter(b =>
-        b.city?.toLowerCase().includes(citySearch.toLowerCase()) ||
-        b.state?.toLowerCase().includes(citySearch.toLowerCase()) ||
-        b.address?.toLowerCase().includes(citySearch.toLowerCase())
-      );
+      // Split "Buffalo, NY" into city and state parts for smarter matching
+      const parts = citySearch.split(',').map(p => p.trim().toLowerCase());
+      const cityPart = parts[0] || '';
+      const statePart = parts[1] || '';
+      filtered = filtered.filter(b => {
+        const bCity = (b.city || '').toLowerCase();
+        const bState = (b.state || '').toLowerCase();
+        const bAddress = (b.address || '').toLowerCase();
+        const cityMatch = cityPart ? (bCity.includes(cityPart) || bAddress.includes(cityPart)) : true;
+        const stateMatch = statePart ? (bState.includes(statePart) || bAddress.includes(statePart)) : true;
+        return cityMatch && stateMatch;
+      });
     }
     if (selectedCategory !== 'All') {
       filtered = filtered.filter(b =>
@@ -1209,11 +1216,11 @@ function App() {
                         </button>
                       </div>
 
-                      {/* Ownership badge */}
-                      {business.owner && getOwnerBadge(business.owner) && (
+                      {/* Ownership badge - reads from ownerEthnicity (bulk imports) or owner (admin form) */}
+                      {(business.ownerEthnicity || business.owner) && getOwnerBadge(business.ownerEthnicity || business.owner) && (
                         <div className="mb-2">
-                          <span className={`inline-flex items-center gap-1 ${getOwnerBadge(business.owner).bg} ${getOwnerBadge(business.owner).text} text-xs font-bold px-3 py-1 rounded-full`}>
-                            {getOwnerBadge(business.owner).emoji} {getOwnerBadge(business.owner).label}
+                          <span className={`inline-flex items-center gap-1 ${getOwnerBadge(business.ownerEthnicity || business.owner).bg} ${getOwnerBadge(business.ownerEthnicity || business.owner).text} text-xs font-bold px-3 py-1 rounded-full`}>
+                            {getOwnerBadge(business.ownerEthnicity || business.owner).emoji} {getOwnerBadge(business.ownerEthnicity || business.owner).label}
                           </span>
                         </div>
                       )}
