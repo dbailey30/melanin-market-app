@@ -404,15 +404,14 @@ function App() {
   const getOwnerBadge = (owner) => {
     if (!owner) return null;
     const map = {
-      'Black-owned':            { bg: 'bg-purple-700',   text: 'text-white',        emoji: '✊🏾' },
-      'Hispanic-owned':         { bg: 'bg-green-600',    text: 'text-white',        emoji: '🌟' },
-      'Asian-owned':            { bg: 'bg-red-600',      text: 'text-white',        emoji: '🌸' },
-      'Native American-owned':  { bg: 'bg-orange-700',   text: 'text-white',        emoji: '🦅' },
-      'Middle Eastern-owned':   { bg: 'bg-teal-600',     text: 'text-white',        emoji: '🌙' },
-      'Pacific Islander-owned': { bg: 'bg-cyan-600',     text: 'text-white',        emoji: '🌊' },
-      'Multi-ethnic owned':     { bg: 'bg-indigo-600',   text: 'text-white',        emoji: '🤝🏾' },
-      'Women-owned':            { bg: 'bg-pink-500',     text: 'text-white',        emoji: '👑' },
-      'Veteran-owned':          { bg: 'bg-gray-700',     text: 'text-white',        emoji: '🎖️' },
+      'Black-owned':            { bg: 'bg-purple-700',   text: 'text-white', emoji: '✊🏾' },
+      'Hispanic-owned':         { bg: 'bg-green-600',    text: 'text-white', emoji: '🌟' },
+      'Latino-owned':           { bg: 'bg-green-700',    text: 'text-white', emoji: '🌎' },
+      'Asian-owned':            { bg: 'bg-red-600',      text: 'text-white', emoji: '🌸' },
+      'Native American-owned':  { bg: 'bg-orange-700',   text: 'text-white', emoji: '🦅' },
+      'Middle Eastern-owned':   { bg: 'bg-teal-600',     text: 'text-white', emoji: '🌙' },
+      'Pacific Islander-owned': { bg: 'bg-cyan-600',     text: 'text-white', emoji: '🌊' },
+      'Other minority-owned':   { bg: 'bg-amber-600',    text: 'text-white', emoji: '🏪' },
     };
     const style = map[owner] || { bg: 'bg-amber-600', text: 'text-white', emoji: '🏪' };
     return { ...style, label: owner };
@@ -712,9 +711,11 @@ function App() {
                         <option value="">Select owner ethnicity</option>
                         <option value="Black-owned">Black-owned</option>
                         <option value="Hispanic-owned">Hispanic-owned</option>
+                        <option value="Latino-owned">Latino-owned</option>
                         <option value="Asian-owned">Asian-owned</option>
                         <option value="Native American-owned">Native American-owned</option>
-                        <option value="Latino-owned">Latino-owned</option>
+                        <option value="Middle Eastern-owned">Middle Eastern-owned</option>
+                        <option value="Pacific Islander-owned">Pacific Islander-owned</option>
                         <option value="Other minority-owned">Other minority-owned</option>
                       </select>
                     </div>
@@ -919,9 +920,11 @@ function App() {
                     <option value="">Select owner ethnicity</option>
                     <option value="Black-owned">Black-owned</option>
                     <option value="Hispanic-owned">Hispanic-owned</option>
+                    <option value="Latino-owned">Latino-owned</option>
                     <option value="Asian-owned">Asian-owned</option>
                     <option value="Native American-owned">Native American-owned</option>
-                    <option value="Latino-owned">Latino-owned</option>
+                    <option value="Middle Eastern-owned">Middle Eastern-owned</option>
+                    <option value="Pacific Islander-owned">Pacific Islander-owned</option>
                     <option value="Other minority-owned">Other minority-owned</option>
                   </select>
                 </div>
