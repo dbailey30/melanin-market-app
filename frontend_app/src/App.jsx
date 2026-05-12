@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import emailjs from '@emailjs/browser';
 import './App.css';
+import { makeSlug } from './components/BusinessProfilePage';
 
 // Admin password for business management
 const ADMIN_PASSWORD = 'melanin2025admin';
@@ -1295,6 +1297,14 @@ function App() {
                           </a>
                         </div>
                       )}
+
+                      {/* View Full Profile button */}
+                      <Link
+                        to={`/biz/${makeSlug(business.name, business.city)}`}
+                        className="w-full py-3 rounded-xl font-bold text-base transition-colors mt-2 bg-amber-800 hover:bg-amber-900 text-white text-center block"
+                      >
+                        🔍 View Full Profile
+                      </Link>
 
                       {/* Add to Favorites button */}
                       <button
