@@ -1380,26 +1380,6 @@
     "id": "98b8a228-7a4a-41ae-99fa-61d71af809f0"
   },
   {
-    "id": "6f471fd8-03cb-4fb1-88cb-093a7cc57368",
-    "name": "Javier Quintana",
-    "category": "Banking/Mortgage",
-    "description": "",
-    "address": "2455 West Ridge Rd., Rochester, New York, 14626",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14626",
-    "phone": "",
-    "website": "http://www.cnbank.com",
-    "hours": "",
-    "ownerEthnicity": "Hispanic-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "09f786a7-8e51-4782-b2b2-40ad8e1bf464",
     "name": "Yolanda Rios",
     "category": "Legal Services",
