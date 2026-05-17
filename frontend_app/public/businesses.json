@@ -1355,26 +1355,6 @@
     "id": "67bc4a2a-5eb2-4911-b54e-b559b44263be"
   },
   {
-    "id": "ced5bf3c-445b-4bde-88b1-14bea3e9d104",
-    "name": "Octavio Garcia",
-    "category": "Real Estate",
-    "description": "",
-    "address": "217 W. Main St, Rochester, New York, 14614",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14614",
-    "phone": "(585) 755-5598",
-    "website": "",
-    "hours": "",
-    "ownerEthnicity": "Hispanic-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "0753410b-b1e1-4bc6-95e9-710f1f4844b2",
     "name": "Kristy González",
     "category": "Business Services",
