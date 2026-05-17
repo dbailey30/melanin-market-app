@@ -600,26 +600,6 @@
     "id": "640565f1-242d-49d1-b359-2bd3345f772a"
   },
   {
-    "id": "0359732f-b05f-457c-9a22-039c1a6a96de",
-    "name": "New York Stylee",
-    "category": "Clothing & Fashion",
-    "description": "Black-owned retail and clothing business in Rochester, NY.",
-    "address": "459 Monroe Avenue, Rochester, New York 14607, United States",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14607",
-    "phone": "",
-    "website": "https://blackownedinrochester.com/listing/new-york-stylee/",
-    "hours": "",
-    "ownerEthnicity": "Black-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "08d0cfc7-3aba-4583-9868-b80e55e994fa",
     "name": "Women of Color New York",
     "category": "Beauty & Wellness",
