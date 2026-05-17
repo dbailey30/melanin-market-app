@@ -1080,26 +1080,6 @@
     "addedBy": "admin"
   },
   {
-    "id": "cabc64bd-95f5-4dfb-bedf-4d241071a5bb",
-    "name": "Aiopx Management Consulting",
-    "category": "Consulting",
-    "description": "Management consulting, education, and coaching services.",
-    "address": "1007 Laquinta Dr",
-    "city": "Webster",
-    "state": "NY",
-    "zip": "14580",
-    "phone": "(585) 627-1716",
-    "website": "https://aiopx.com/",
-    "hours": "",
-    "ownerEthnicity": "Black-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "0195f763-8ceb-4c5d-abc0-e7d1720b6631",
     "name": "Aria Virtual Consulting",
     "category": "Consulting",
