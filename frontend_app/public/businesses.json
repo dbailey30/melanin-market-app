@@ -1380,26 +1380,6 @@
     "id": "98b8a228-7a4a-41ae-99fa-61d71af809f0"
   },
   {
-    "id": "bbb668cc-3e80-4f1f-a7d7-7f69ac319bfc",
-    "name": "Joseph Sayre",
-    "category": "Education & Tutoring",
-    "description": "",
-    "address": "89 East Avenue, Rochester, New York, 14649",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14649",
-    "phone": "",
-    "website": "",
-    "hours": "",
-    "ownerEthnicity": "Hispanic-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "ed54eb01-c47a-4f1b-90ef-f7240970a96f",
     "name": "Teo Siguenza",
     "category": "Legal Services",
