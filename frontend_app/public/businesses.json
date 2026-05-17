@@ -1060,26 +1060,6 @@
     "id": "c389edcf-0696-40bf-9742-270508e4dc51"
   },
   {
-    "id": "b0f613de-6753-4cac-bfe5-4a5663bae5a5",
-    "name": "Brown & Hutchinson",
-    "category": "Legal Services",
-    "description": "Legal Services firm in Rochester, NY.",
-    "address": "925 Crossroads Bld 2 State St #900",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14614",
-    "phone": "(585) 286-1499",
-    "website": "http://www.brownhutchinson.com/",
-    "hours": "",
-    "ownerEthnicity": "Black-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "f0342b7f-3a9d-4e33-b3df-9ba7117531d6",
     "name": "Conversance Business Solution",
     "category": "Legal Services",
