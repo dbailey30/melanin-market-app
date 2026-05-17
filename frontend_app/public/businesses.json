@@ -1080,26 +1080,6 @@
     "addedBy": "admin"
   },
   {
-    "id": "e9abaeff-a41b-4dca-ad42-ed4581bd9727",
-    "name": "E-z Capital Solutions",
-    "category": "Financial Services",
-    "description": "Financial solutions services.",
-    "address": "510 Clinton Sq 510",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14604",
-    "phone": "(585) 939-7578",
-    "website": "https://www.e-zcapitalsolutions.com/",
-    "hours": "",
-    "ownerEthnicity": "Black-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "cabc64bd-95f5-4dfb-bedf-4d241071a5bb",
     "name": "Aiopx Management Consulting",
     "category": "Consulting",
