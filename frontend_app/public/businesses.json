@@ -1105,26 +1105,6 @@
     "id": "f3db6c3b-a74c-4c81-ba06-adb0a485841d"
   },
   {
-    "id": "d1cb7b3a-0a47-4507-967b-b68061aedeee",
-    "name": "Law Office of Craig D. Carson",
-    "category": "Legal Services",
-    "description": "",
-    "address": "45 Exchange Blvd",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14614",
-    "phone": "(585) 690-2206",
-    "website": "http://www.craigcarsonlaw.com/",
-    "hours": "",
-    "ownerEthnicity": "Black-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "caf86e76-0496-4aee-9b98-dd60deafd36d",
     "name": "Leticia D. Astacio Attorney & Counselor At Law",
     "category": "Legal Services",
