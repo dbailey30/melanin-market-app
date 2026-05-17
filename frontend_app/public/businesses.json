@@ -1425,26 +1425,6 @@
     "addedBy": "admin"
   },
   {
-    "id": "860a68d0-aa2c-48c4-963a-01a8adb4d44f",
-    "name": "Lee’s Oriental Food & Gifts",
-    "category": "Restaurant",
-    "description": "N/A",
-    "address": "900 Jefferson Road",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14623",
-    "phone": "(585) 272-7020",
-    "website": "N/A",
-    "hours": "N/A",
-    "ownerEthnicity": "Asian-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "1c5cc137-729f-4cba-baa8-6145ba1519f2",
     "name": "Asia Market Groceries",
     "category": "Restaurant",
