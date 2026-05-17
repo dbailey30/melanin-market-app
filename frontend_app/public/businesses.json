@@ -1105,26 +1105,6 @@
     "id": "f3db6c3b-a74c-4c81-ba06-adb0a485841d"
   },
   {
-    "id": "78e987e8-afd2-40d4-9d80-06002257a0e5",
-    "name": "Porter Law Group",
-    "category": "Legal Services",
-    "description": "",
-    "address": "510 Clinton Square",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14604",
-    "phone": "",
-    "website": "https://www.nycancerlawyers.com/",
-    "hours": "",
-    "ownerEthnicity": "Black-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "01c6ae0f-49ee-47fa-8f9d-a61a962d87c5",
     "name": "Salmon Law Firm",
     "category": "Legal Services",
