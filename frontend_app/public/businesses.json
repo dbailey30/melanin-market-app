@@ -895,26 +895,6 @@
     "id": "fc376895-c0b7-48e0-9394-209d2af33995"
   },
   {
-    "id": "12409060-5e98-4fb5-a8b1-c55369149614",
-    "name": "Hamilton & Ruiz Company Inc.",
-    "category": "Financial Services",
-    "description": "Provides accounting and bookkeeping services.",
-    "address": "250 Mill St",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14614",
-    "phone": "(585) 454-4320",
-    "website": "http://www.hamiltonruiz.com",
-    "hours": "",
-    "ownerEthnicity": "Black-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "18e1ddbd-c9c3-4c4d-8f60-6f1f9ffa8cc7",
     "name": "Brown Hutchinson LLP",
     "category": "Legal Services",
