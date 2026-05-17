@@ -1355,26 +1355,6 @@
     "id": "67bc4a2a-5eb2-4911-b54e-b559b44263be"
   },
   {
-    "id": "8ad0fc8d-18af-47e8-a8f7-b6823ce63f47",
-    "name": "Ramon Ligabo",
-    "category": "Professional Services",
-    "description": "",
-    "address": "90 Linden Oaks, Suite 250, Rochester, New York, 14625",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14625",
-    "phone": "(314) 328-4083",
-    "website": "luzco.com",
-    "hours": "",
-    "ownerEthnicity": "Hispanic-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "969b2238-56a1-4beb-8fb5-0809622687e9",
     "name": "Eugenio Marlin",
     "category": "Human Services",
