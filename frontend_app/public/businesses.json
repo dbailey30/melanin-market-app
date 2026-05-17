@@ -1080,26 +1080,6 @@
     "addedBy": "admin"
   },
   {
-    "id": "2d4a50fe-e026-4c38-b8a1-2c0fc966f3fc",
-    "name": "Dedwen Financial",
-    "category": "Financial Services",
-    "description": "Financial and insurance services.",
-    "address": "803 West Ave Suite 330",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14611",
-    "phone": "(585) 314-0385",
-    "website": "",
-    "hours": "",
-    "ownerEthnicity": "Black-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "e9abaeff-a41b-4dca-ad42-ed4581bd9727",
     "name": "E-z Capital Solutions",
     "category": "Financial Services",
