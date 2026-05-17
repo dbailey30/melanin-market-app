@@ -1380,26 +1380,6 @@
     "id": "98b8a228-7a4a-41ae-99fa-61d71af809f0"
   },
   {
-    "id": "ed54eb01-c47a-4f1b-90ef-f7240970a96f",
-    "name": "Teo Siguenza",
-    "category": "Legal Services",
-    "description": "",
-    "address": "45 Exchange Blvd. 4th Floor, Rochester, New York, 14609",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14609",
-    "phone": "",
-    "website": "https://siguenzalaw.com/",
-    "hours": "",
-    "ownerEthnicity": "Hispanic-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "487b7749-54ba-48de-9b49-709b6bb804dc",
     "name": "Wilson Soto",
     "category": "Construction & Trades",
