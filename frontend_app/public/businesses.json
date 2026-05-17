@@ -1355,26 +1355,6 @@
     "id": "67bc4a2a-5eb2-4911-b54e-b559b44263be"
   },
   {
-    "id": "a0fdc835-00ea-4578-8b17-d03fd0080e7c",
-    "name": "Fabricio Morales",
-    "category": "Retail",
-    "description": "",
-    "address": "106 Despatch Drive, East Rochester, NY, 14445",
-    "city": "East Rochester",
-    "state": "NY",
-    "zip": "14445",
-    "phone": "(585) 238-2880",
-    "website": "fmop.com",
-    "hours": "",
-    "ownerEthnicity": "Hispanic-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "b11eea10-3743-4dd6-a19b-b985425d0be2",
     "name": "Luis E. Ormaechea",
     "category": "Legal Services",
