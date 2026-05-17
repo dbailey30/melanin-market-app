@@ -15898,5 +15898,32 @@
     "image": "",
     "dateAdded": "2026-05-10",
     "addedBy": "admin"
+  },
+  {
+    "name": "Lorraine's Dominican Beauty Salon",
+    "type": "Beauty",
+    "owner": "Hispanic-owned",
+    "category": "Beauty",
+    "description": "A beauty salon offering a variety of hair and nail services.",
+    "address": "110 Lake Avenue",
+    "city": "Rochester",
+    "state": "NY",
+    "zip": "",
+    "phone": "585-458-4247",
+    "email": "noemail@email.com",
+    "website": "",
+    "hours": "Tues., - Thurs., 10AM-5PM; Fri., 9AM-5:30PM; Sat., 8AM-5:30PM",
+    "image": "",
+    "rating": "0.0 (0)",
+    "service_area": "",
+    "business_type": "physical",
+    "verified": true,
+    "verificationSubmitted": false,
+    "verificationMethod": "",
+    "verificationDetails": "",
+    "verification_document": "",
+    "id": null,
+    "dateAdded": "2026-05-17",
+    "status": "approved"
   }
 ]
