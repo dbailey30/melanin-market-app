@@ -1080,26 +1080,6 @@
     "addedBy": "admin"
   },
   {
-    "id": "1bb3ade1-4049-4cba-8f6d-d8298b3ae1e9",
-    "name": "Allstate Insurance - Michael Thomas",
-    "category": "Financial Services",
-    "description": "Allstate Insurance agent.",
-    "address": "3699 W Henrietta Rd",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14623",
-    "phone": "(585) 334-1780",
-    "website": "https://agents.allstate.com/michael-a-thomas-rochester-ny.html",
-    "hours": "",
-    "ownerEthnicity": "Black-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "2d4a50fe-e026-4c38-b8a1-2c0fc966f3fc",
     "name": "Dedwen Financial",
     "category": "Financial Services",
