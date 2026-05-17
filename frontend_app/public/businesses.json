@@ -1035,26 +1035,6 @@
     "addedBy": "admin"
   },
   {
-    "id": "599b4d8a-f203-4160-9824-7e6155b5f9c4",
-    "name": "AQ Hamilton Insurance Agency",
-    "category": "Financial Services",
-    "description": "Black owned insurance agency in Rochester, NY. Serving the best interest of our clients by delivering the best products and services available in NY today, and everyday.",
-    "address": "1511 South Avenue",
-    "city": "Rochester",
-    "state": "NY",
-    "zip": "14620",
-    "phone": "",
-    "website": "",
-    "hours": "",
-    "ownerEthnicity": "Black-owned",
-    "verified": false,
-    "verificationSubmitted": false,
-    "approved": true,
-    "image": "",
-    "dateAdded": "2026-05-10",
-    "addedBy": "admin"
-  },
-  {
     "id": "af8e9ad4-0e97-48a2-a360-47b81a6f3957",
     "name": "Moving Forward Training Source",
     "category": "Consulting",
